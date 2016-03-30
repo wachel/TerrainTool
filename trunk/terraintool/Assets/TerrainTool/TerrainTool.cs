@@ -4,11 +4,27 @@ using System.Collections.Generic;
 
 namespace TerrainTool
 {
-    public class TerrainTool : MonoBehaviour
+    [ExecuteInEditMode]
+    public class TerrainTool : MonoBehaviour , ISerializationCallbackReceiver
     {
-        public NodeContainer node = new NodeContainer();
-        [HideInInspector]
-        public List<NodeBase> nodes = new List<NodeBase>();
+        public NodeContainer container;
+        public void OnEnable()
+        {
+            container = new NodeContainer();
+        }
 
+        public void Start()
+        {
+            container = new NodeContainer();
+            container.node = new NodeConstValue();
+        }
+
+        public void OnBeforeSerialize()
+        { 
+        }
+
+        public void OnAfterDeserialize()
+        {
+        }
     }
 }

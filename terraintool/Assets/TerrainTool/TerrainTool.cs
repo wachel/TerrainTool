@@ -6,8 +6,7 @@ namespace TerrainTool
 {
     public class TerrainTool : MonoBehaviour
     {
-        public NodeBase node = new NodeBase();
-
+        public NodeContainer node = new NodeContainer();
         [HideInInspector]
         public List<NodeBase> nodes = new List<NodeBase>();
 

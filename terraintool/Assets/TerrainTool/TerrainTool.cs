@@ -11,7 +11,8 @@ namespace TerrainTool
         public void OnEnable()
         {
             container = ScriptableObject.CreateInstance<NodeContainer>();
-            container.node = ScriptableObject.CreateInstance <NodeConstValue>();
+            container.name = "root";
+            container.node = ScriptableObject.CreateInstance<NodeCurve>();
         }
 
         public void Start()

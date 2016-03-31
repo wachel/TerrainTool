@@ -48,6 +48,7 @@ namespace TerrainTool
 
     public class NodeContainer:ScriptableObject
     {
+        public bool foldout = true;
         public string name;
         public Vector2 pos;
         public NodeBase node;

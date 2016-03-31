@@ -10,17 +10,17 @@ namespace TerrainTool
         public NodeContainer container;
         public void OnEnable()
         {
-            container = new NodeContainer();
+            container = ScriptableObject.CreateInstance<NodeContainer>();
+            container.node = ScriptableObject.CreateInstance <NodeConstValue>();
         }
 
         public void Start()
         {
-            container = new NodeContainer();
-            container.node = new NodeConstValue();
         }
 
         public void OnBeforeSerialize()
-        { 
+        {
+
         }
 
         public void OnAfterDeserialize()

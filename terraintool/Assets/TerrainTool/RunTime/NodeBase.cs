@@ -46,13 +46,11 @@ namespace TerrainTool
         Height_Output,
     }
 
-    [Serializable]
-    public class NodeContainer
+    public class NodeContainer:ScriptableObject
     {
         public string name;
         public Vector2 pos;
         public NodeBase node;
-        public NodeConstValue constValue;
         [NonSerialized]
         public List<NodeContainer> inputs = new List<NodeContainer>();
         private NodeBase[] inputsNode;
@@ -150,7 +148,7 @@ namespace TerrainTool
             foreach (Keyframe k in c.keys) {
                 rlt ^= (k.inTangent * 1.122112 + k.outTangent * 2.123123 + k.tangentMode * 0.1324123 + k.time * 4.2343113 + k.value * 2.34233).GetHashCode();
             }
-            return rlt;
+            return rlt; 
         }
         public static void addCache(string key, float[,] data)
         {
@@ -169,8 +167,7 @@ namespace TerrainTool
         }
     }
 
-    [Serializable]
-    public abstract class NodeBase
+    public abstract class NodeBase:ScriptableObject
     {
         public abstract NodeType getNodeType();
         public virtual string[] GetInputNames(){return new string[0];}
@@ -179,7 +176,6 @@ namespace TerrainTool
         public abstract float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f);
     }
 
-    [Serializable]
     public class NodeConstValue : NodeBase
     {
         public float value = 1.0f;

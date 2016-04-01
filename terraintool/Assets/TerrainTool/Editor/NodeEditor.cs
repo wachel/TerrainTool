@@ -32,9 +32,17 @@ public class NodeEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Generate")) {
+
+        }
         if (GUILayout.Button("Open Editor")) {
 
         }
+        if (GUILayout.Button("Export")) {
+
+        }
+        GUILayout.EndHorizontal();
         //DrawDefaultInspector();
         //serializedObject.Update();
         //EditorGUILayout.PropertyField(sp);
@@ -59,7 +67,7 @@ public class NodeEditor : Editor
             }
         });
 
-        SerializedProperty prop = soContainer.GetIterator();
+        //SerializedProperty prop = soContainer.GetIterator();
         //while (prop.NextVisible(true)) {
         //    int a = 0;
         //    if (prop.name == "container") {
@@ -78,5 +86,6 @@ public class NodeEditor : Editor
             soContainer.ApplyModifiedProperties();
             soNode.ApplyModifiedProperties();
         }
+
     }
 }

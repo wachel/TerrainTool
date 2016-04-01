@@ -46,69 +46,6 @@ namespace TerrainTool
         Height_Output,
     }
 
-    public class NodeContainer:ScriptableObject
-    {
-        public bool foldout = true;
-        public string name;
-        public Vector2 pos;
-        public NodeBase node;
-        [NonSerialized]
-        public List<NodeContainer> inputs = new List<NodeContainer>();
-        private NodeBase[] inputsNode;
-        public float[,] previewTexture;
-        public void SetNode(NodeBase node)
-        {
-            this.node = node;
-            while(node.inputs.Length > inputs.Count) {
-                inputs.Add(null);
-            }
-            while(node.inputs.Length < inputs.Count) {
-                inputs.RemoveAt(inputs.Count - 1);
-            }
-        }
-        public float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
-        {
-            if(node != null) {
-                return node.update(seed, x, y, w, h, scaleX, scaleY);
-            }
-            return new float[w, h];
-        }
-        public void updateInput()
-        {
-            if (node != null) {
-                for (int i = 0; i < node.inputs.Length; i++) {
-                    node.inputs[i] = inputs[i].node;
-                }
-            }
-        }
-        public void updatePreview(int seed, int x, int y, int w, int h)
-        {
-            previewTexture = update(seed, x, y, w, h);
-        }
-        public override int GetHashCode()
-        {
-            int rlt = 0;
-            if (node != null) {
-                foreach (var f in node.GetType().GetFields()) {
-                    var val = f.GetValue(this);
-                    if (val != null) {
-                        if (f.FieldType == typeof(AnimationCurve)) {
-                            AnimationCurve c = (AnimationCurve)val;
-                            rlt ^= PerlinCache.getCurveHash(c);
-                        }
-                        rlt ^= val.GetHashCode();
-                    }
-                }
-                for (int i = 0; i < inputs.Count; i++) {
-                    if (inputs[i] != null) {
-                        rlt ^= inputs[i].GetHashCode();
-                    }
-                }
-            }
-            return rlt;
-        }
-    }
-
     public static class PerlinCache
     {
         static Dictionary<string, float[,]> cachedDatas = new Dictionary<string, float[,]>();
@@ -149,7 +86,7 @@ namespace TerrainTool
             foreach (Keyframe k in c.keys) {
                 rlt ^= (k.inTangent * 1.122112 + k.outTangent * 2.123123 + k.tangentMode * 0.1324123 + k.time * 4.2343113 + k.value * 2.34233).GetHashCode();
             }
-            return rlt; 
+            return rlt;
         }
         public static void addCache(string key, float[,] data)
         {
@@ -168,11 +105,72 @@ namespace TerrainTool
         }
     }
 
+    public class NodeContainer:ScriptableObject
+    {
+        public bool foldout = true;
+        public string name;
+        public Vector2 pos;
+        public NodeBase node;
+        public List<NodeContainer> inputs = new List<NodeContainer>();
+        private NodeBase[] inputsNode;
+        public float[,] previewTexture;
+        public void SetNode(NodeBase node)
+        {
+            this.node = node;
+            while(node.inputs.Length > inputs.Count) {
+                inputs.Add(null);
+            }
+            while(node.inputs.Length < inputs.Count) {
+                inputs.RemoveAt(inputs.Count - 1);
+            }
+        }
+        public float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        {
+            if(node != null) {
+                return node.update(seed, x, y, w, h, scaleX, scaleY);
+            }
+            return new float[w, h];
+        }
+        public void updateInputNode()
+        {
+            if (node != null) {
+                for (int i = 0; i < node.inputs.Length; i++) {
+                    node.inputs[i] = inputs[i].node;
+                }
+            }
+        }
+        public void updatePreview(int seed, int x, int y, int w, int h)
+        {
+            previewTexture = update(seed, x, y, w, h);
+        }
+        public override int GetHashCode()
+        {
+            int rlt = 0;
+            if (node != null) {
+                foreach (var f in node.GetType().GetFields()) {
+                    var val = f.GetValue(this);
+                    if (val != null) {
+                        if (f.FieldType == typeof(AnimationCurve)) {
+                            AnimationCurve c = (AnimationCurve)val;
+                            rlt ^= PerlinCache.getCurveHash(c);
+                        }
+                        rlt ^= val.GetHashCode();
+                    }
+                }
+                for (int i = 0; i < inputs.Count; i++) {
+                    if (inputs[i] != null) {
+                        rlt ^= inputs[i].GetHashCode();
+                    }
+                }
+            }
+            return rlt;
+        }
+    }
+
     public abstract class NodeBase:ScriptableObject
     {
         public abstract NodeType getNodeType();
         public virtual string[] GetInputNames(){return new string[0];}
-        [NonSerialized]
         public NodeBase[] inputs;
         public abstract float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f);
     }
@@ -609,7 +607,6 @@ namespace TerrainTool
         public float minSize = 1.0f;
         public float maxSize = 1.0f;
         public bool bBillboard = true;
-        private bool bShowInMain = true;
         public Texture2D Texture { get { return texture; } }
 
         public override NodeType getNodeType()

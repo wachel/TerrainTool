@@ -50,7 +50,7 @@ public enum OutputType
 }
 
 [Serializable]
-public abstract class NodeBase
+public abstract class NodeBase:ScriptableObject
 {
     public NodeBase() {
         label = getDefaultName();

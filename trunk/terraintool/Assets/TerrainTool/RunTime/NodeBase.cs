@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace TerrainTool
 {
+    //public delegate void Delegate();
     public enum NodeType
     {
         Generator,
@@ -102,6 +103,27 @@ namespace TerrainTool
                 return cachedDatas[key];
             }
             return null;
+        }
+    }
+
+    public static class NodeMaker
+    {
+        private static List<NodeItem> nodes;
+        public class NodeItem
+        {
+            public NodeItem(NodeType type,string subType,Action funNewNode)
+            {
+                this.type = type;
+                this.subType = subType;
+                this.funNewNode = funNewNode;
+            }
+            NodeType type;
+            string subType;
+            Action funNewNode;
+        }
+        public static void AddNodeType(NodeType type,string subType,Action funNewNode)
+        {
+            nodes.Add(new NodeItem(type, subType, funNewNode));
         }
     }
 

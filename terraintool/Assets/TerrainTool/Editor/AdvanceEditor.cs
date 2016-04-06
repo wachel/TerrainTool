@@ -311,7 +311,7 @@ class AdvanceEditor : EditorWindow
         if (nodeManager.findNodeWindow(curSelectedNode) != null) {
             bShowDetailConfig = EditorGUILayout.Foldout(bShowDetailConfig, "Detail Config", myFoldoutStyle);
             if (bShowDetailConfig) {
-                var curNode = nodeManager.findNodeWindow(curSelectedNode);
+                NodeWindow curNode = nodeManager.findNodeWindow(curSelectedNode);
                 curNode.DrawProperty();
             }
         }

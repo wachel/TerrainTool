@@ -4,7 +4,7 @@ using System.Collections;
 using System;
 
 [Serializable]
-public class NodeWindow
+public class NodeWindow : Editor
 {
     public delegate void DeleteFunc(string guid);
     public delegate void SelectFunc(string guid);
@@ -137,6 +137,8 @@ public class NodeWindow
             node = new NodeWrapper(newNode);
         }
         node.value.OnGUI();
+
+        //DrawPropertiesExcluding(new SerializedObject(node.value), "m_Script","inputs","guid");
 
         int newHashCode = node.value.GetHashCode();
         if (newHashCode != oldHash || bNeedUpdate) {

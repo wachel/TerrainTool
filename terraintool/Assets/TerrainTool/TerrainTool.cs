@@ -17,14 +17,12 @@ namespace TerrainTool
             if (nodeContainers.Count == 0) {
                 {
                     NodeContainer temp = new NodeContainer();
-                    temp.name = "Height Output";
                     temp.SetNode(NodeMaker.Instance.CreateNode(NodeType.Output));
                     temp.rect = new Rect(0, 0, 128, 128 + 16);
                     nodeContainers.Add(temp);
                 }
                 {
                     NodeContainer temp = new NodeContainer();
-                    temp.name = "Const Value";
                     temp.SetNode(NodeMaker.Instance.CreateNode(NodeType.Generator));
                     temp.rect = new Rect(100, 200, 128, 128 + 16);
                     nodeContainers.Add(temp);

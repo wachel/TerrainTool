@@ -25,5 +25,9 @@ namespace TerrainTool
         {
             return new string[] { "i" };
         }
+        public override bool hasOutput()
+        {
+            return false;
+        }
     }
 }

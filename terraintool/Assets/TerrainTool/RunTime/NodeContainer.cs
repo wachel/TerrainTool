@@ -9,10 +9,9 @@ namespace TerrainTool
     public class NodeContainer : ScriptableObject
     {
         public bool foldout = true;
-        public string name;
         public Rect rect;
         public NodeBase node;
-        public List<NodeContainer> inputs = new List<NodeContainer>();
+        //public List<NodeContainer> inputs = new List<NodeContainer>();
         [NonSerialized]
         public int winID;
         public float[,] previewTexture;
@@ -23,12 +22,13 @@ namespace TerrainTool
         public void SetNode(NodeBase node)
         {
             this.node = node;
-            while (node.inputs.Length > inputs.Count) {
-                inputs.Add(null);
-            }
-            while (node.inputs.Length < inputs.Count) {
-                inputs.RemoveAt(inputs.Count - 1);
-            }
+            node.container = this;
+            //while (node.inputs.Length > inputs.Count) {
+            //    inputs.Add(null);
+            //}
+            //while (node.inputs.Length < inputs.Count) {
+            //    inputs.RemoveAt(inputs.Count - 1);
+            //}
         }
         public float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
@@ -37,14 +37,14 @@ namespace TerrainTool
             }
             return new float[w, h];
         }
-        public void updateInputNode()
-        {
-            if (node != null) {
-                for (int i = 0; i < node.inputs.Length; i++) {
-                    node.inputs[i] = inputs[i].node;
-                }
-            }
-        }
+        //public void updateInputNode()
+        //{
+        //    if (node != null) {
+        //        for (int i = 0; i < node.inputs.Length; i++) {
+        //            node.inputs[i] = inputs[i].node;
+        //        }
+        //    }
+        //}
         public void updatePreview(int seed, int x, int y, int w, int h)
         {
             previewTexture = update(seed, x, y, w, h);
@@ -63,9 +63,9 @@ namespace TerrainTool
                         rlt ^= val.GetHashCode();
                     }
                 }
-                for (int i = 0; i < inputs.Count; i++) {
-                    if (inputs[i] != null) {
-                        rlt ^= inputs[i].GetHashCode();
+                for (int i = 0; i < node.inputs.Length; i++) {
+                    if (node.inputs[i] != null) {
+                        rlt ^= node.inputs[i].GetHashCode();
                     }
                 }
             }
@@ -73,15 +73,15 @@ namespace TerrainTool
         }
         public bool hasOutput()
         {
-            return true;
+            return node.hasOutput();
         }
         public int getInputNum()
         {
-            return 0;
+            return node.GetInputNames().Length;
         }
         public string GetInputLabel(int index)
         {
-            return "i";
+            return node.GetInputNames()[index];
         }
         public Rect getInputPortRect(int index)
         {

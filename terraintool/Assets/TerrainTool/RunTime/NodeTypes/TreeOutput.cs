@@ -33,6 +33,10 @@ namespace TerrainTool
         {
             return new string[] { "i" };
         }
+        public override bool hasOutput()
+        {
+            return false;
+        }
         private static long getHash(long a)
         {
             a = (a ^ 61) ^ (a >> 16);

@@ -16,10 +16,12 @@ namespace TerrainTool
 
     public abstract class NodeBase : ScriptableObject
     {
+        public NodeContainer container;
+        public string name;
         public float scale = 1.0f;
         public float bias = 0f;
+        public virtual bool hasOutput(){return true;}
         public virtual string[] GetInputNames() { return new string[0]; }
-        [NonSerialized]
         public NodeBase[] inputs = new NodeBase[0];
         public abstract float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f);
     }
@@ -134,7 +136,7 @@ namespace TerrainTool
         public NodeBase CreateNode(NodeType type){
             for (int i = 0; i < nodes.Count; i++) {
                 if (nodes[i].type == type) {
-                    return nodes[i].funNewNode();
+                    return CreateNode(nodes[i]);
                 }
             }
             return null;
@@ -155,11 +157,18 @@ namespace TerrainTool
         public NodeBase CreateNode(NodeType type,string subType)
         {
             for (int i = 0; i < nodes.Count; i++) {
-                if (nodes[i].type == type) {
-                    return nodes[i].funNewNode();
+                if (nodes[i].type == type && nodes[i].subType == subType) {
+                    return CreateNode(nodes[i]);
                 }
             }
             return null;
+        }
+        private NodeBase CreateNode(NodeItem nodeType)
+        {
+            NodeBase rlt = nodeType.funNewNode();
+            rlt.name = nodeType.subType;
+            rlt.inputs = new NodeBase[rlt.GetInputNames().Length];
+            return rlt;
         }
     }
 

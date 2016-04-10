@@ -201,10 +201,10 @@ namespace TerrainTool
 
             foreach(var n in nodeContainers){
                 for (int i = 0; i < n.getInputNum(); i++) {
-                    var inputNode = n.inputs[i];
+                    var inputNode = n.node.inputs[i];
                     if (inputNode != null) {
                         var endPos = n.getInputPortRect(i).center;
-                        var startPos = inputNode.getOutputPortRect().center;
+                        var startPos = inputNode.container.getOutputPortRect().center;
                         drawBezier(startPos, endPos, new Color(0.8f, 0.8f, 0.8f), true);
                     }
                 }
@@ -220,10 +220,10 @@ namespace TerrainTool
                     foreach(var n in nodeContainers){
                         for (int i = 0; i < n.getInputNum(); i++) {
                             if (n.getInputPortRect(i).Contains(Event.current.mousePosition)) {
-                                if (n.inputs[i] != null) {
+                                if (n.node.inputs[i] != null) {
                                     bDragingOutputLine = true;
-                                    startLineNode = n.inputs[i];
-                                    n.inputs[i] = null;
+                                    startLineNode = n.node.inputs[i].container;
+                                    n.node.inputs[i] = null;
                                 }
                                 else {
                                     bDragingInputLine = true;
@@ -247,7 +247,7 @@ namespace TerrainTool
                         foreach(var n in nodeContainers){
                             if (n != startLineNode) {
                                 if (n.hasOutput() && n.getOutputPortRect().Contains(Event.current.mousePosition)) {
-                                    startLineNode.inputs[startLinePort] = n;
+                                    startLineNode.node.inputs[startLinePort] = n.node;
                                 }
                             }
                         }
@@ -257,7 +257,7 @@ namespace TerrainTool
                             if (n != startLineNode) {
                                 for (int i = 0; i < n.getInputNum(); i++) {
                                     if (n.getInputPortRect(i).Contains(Event.current.mousePosition)) {
-                                        n.inputs[i] = startLineNode;
+                                        n.node.inputs[i] = startLineNode.node;
                                     }
                                 }
                             }
@@ -444,7 +444,11 @@ namespace TerrainTool
 
 class PropertyDrawer : Editor
 {
-    public static void DrawProperty(SerializedObject obj){
-        DrawPropertiesExcluding(obj);
+    public static void DrawProperty(SerializedObject so){
+        DrawPropertiesExcluding(so, "m_Script","container");
+        if (GUI.changed) {
+            so.ApplyModifiedProperties();
+            GUI.changed = false;
+        }
     }
 }

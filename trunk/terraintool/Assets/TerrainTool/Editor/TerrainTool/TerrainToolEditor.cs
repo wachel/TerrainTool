@@ -29,7 +29,7 @@ namespace TerrainTool
         {
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Generate Terrain")) {
-
+                terrainTool.DoGenerate();
             }
             if (GUILayout.Button("Open Editor")) {
                 AdvanceEditor advanceWindow = (AdvanceEditor)EditorWindow.GetWindow(typeof(AdvanceEditor));
@@ -48,9 +48,9 @@ namespace TerrainTool
                     NodeContainer container = terrainTool.nodeContainers[i];
                     GUIStyle myFoldoutStyle = new GUIStyle(EditorStyles.foldout);
                     myFoldoutStyle.fontStyle = FontStyle.Bold;
-                    if (container.foldout = EditorGUILayout.Foldout(container.foldout, container.name,myFoldoutStyle)) {
+                    if (container.foldout = EditorGUILayout.Foldout(container.foldout, container.node.name,myFoldoutStyle)) {
                         SerializedObject so = new SerializedObject(container.node);
-                        DrawPropertiesExcluding(so, "m_Script");
+                        DrawPropertiesExcluding(so, "m_Script","name","container");
                         if (GUI.changed) {
                             so.ApplyModifiedProperties();
                             GUI.changed = false;

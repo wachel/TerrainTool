@@ -394,26 +394,12 @@ class MainWindow : EditorWindow
             for(int i = 0; i<instances.Count; i++) {
                 GameObject prefab = treeList[instances[i].prototypeIndex].prefab;
                 GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                //GameObject obj = (GameObject)GameObject.Instantiate(prefab);
-                
                 obj.transform.SetParent(container.transform, true);
                 obj.transform.position = Vector3.Scale(instances[i].position , terr.terrainData.size);
                 obj.transform.rotation = prefab.transform.rotation * Quaternion.AngleAxis(instances[i].rotation,Vector3.up);
                 obj.transform.localScale = new Vector3(instances[i].widthScale, instances[i].heightScale, instances[i].widthScale);
                 obj.transform.name = prefab.name;
-                //obj.isStatic = true;
             }
-            //{
-            //    Transform[] childs = container.GetComponentsInChildren<Transform>();
-            //    foreach (Transform child in childs) {
-            //        if (child != container.transform) {
-            //            if (child != null) {
-            //                child.gameObject.isStatic = true;
-            //            }
-            //        }
-            //    }
-            //}
-
         }
     }
 

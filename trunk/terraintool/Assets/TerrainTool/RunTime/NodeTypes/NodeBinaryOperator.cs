@@ -13,10 +13,6 @@ namespace TerrainTool
             Max,
         }
         public BinaryOperatorType operatorType;
-        public NodeBinaryOperator(BinaryOperatorType op)
-        {
-            operatorType = op;
-        }
         public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
             float[,] values = new float[w, h];
@@ -74,6 +70,16 @@ namespace TerrainTool
         public override string[] GetInputNames()
         {
             return new string[] { "a", "b" };
+        }
+        public override string GetExpression()
+        {
+            switch (operatorType) {
+                case BinaryOperatorType.Add:return "o = a + b";
+                case BinaryOperatorType.Sub:return "o = a - b";
+                case BinaryOperatorType.Mul:return "o = a * b";
+                case BinaryOperatorType.Max:return "o = max(a,b)";
+                default:return "";
+            }
         }
     }
 }

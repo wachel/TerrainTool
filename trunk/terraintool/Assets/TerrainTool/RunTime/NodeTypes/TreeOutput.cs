@@ -6,12 +6,13 @@ namespace TerrainTool
     public class TreeOutput : NodeBase
     {
         public float density = 0.01f;
-        public int treeIndex = 0;
         public float bendFactor;
         public float maxSize = 1.2f;
         public float minSize = 0.8f;
-        public GameObject objTree;
-        public bool bEntity = false;
+        public GameObject[] prefabs = new GameObject[1];
+        public bool isEntity = false;
+        [HideInInspector]
+        public int startTreePropertyIndex = 0;
 
         public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
@@ -46,7 +47,7 @@ namespace TerrainTool
             a = a ^ (a >> 15);
             return a;
         }
-        public static int getTreeNum(int x, int y, float val, float density, int layer)
+        public int getTreeNum(int x, int y, float val, float density, int layer)
         {
             long hashCode = getHash(x * 123456789 + y + layer * 1234567);
             hashCode = getHash(hashCode);
@@ -60,7 +61,7 @@ namespace TerrainTool
             }
             return a;
         }
-        public static Vector2 getTreePos(int x, int y, int index, float maxOffset, int layer)
+        public Vector2 getTreePos(int x, int y, int index, float maxOffset, int layer)
         {
             long hashCode = getHash(x * 123456789 + y + index * 123456 + layer * 12345678);
             hashCode = getHash(hashCode);
@@ -71,7 +72,7 @@ namespace TerrainTool
             Vector2 rlt = new Vector2((randX - 0.5f) * maxOffset, (randY - 0.5f) * maxOffset);
             return rlt;
         }
-        public static float GetAngle(int x, int y, int index, float maxOffset, int layer)
+        public float GetAngle(int x, int y, int index, float maxOffset, int layer)
         {
             long hashCode = getHash(x * 123456789 + y + index * 123456 + layer * 12345678);
             hashCode = getHash(hashCode);
@@ -80,7 +81,7 @@ namespace TerrainTool
             float angle = (hashCode & 0xffffffff) / (float)0xffffffff;
             return angle;
         }
-        public static float GetScale(int x, int y, int index, float maxOffset, int layer)
+        public float GetScale(int x, int y, int index, float maxOffset, int layer)
         {
             long hashCode = getHash(x * 1234567 + y + index * 1234567 + layer * 1234567);
             hashCode = getHash(hashCode);
@@ -88,6 +89,17 @@ namespace TerrainTool
             hashCode = getHash(hashCode);
             float angle = (hashCode & 0xffffffff) / (float)0xffffffff;
             return angle;
+        }
+        public int GetPrefabIndex(int x, int y, int index, float maxOffset, int layer)
+        {
+            if (prefabs.Length > 0) {
+                long hashCode = getHash(x * 1234567 + y + index * 1234567 + layer * 1234567);
+                hashCode = getHash(hashCode);
+                hashCode = getHash(hashCode);
+                hashCode = getHash(hashCode);
+                return (int)hashCode % prefabs.Length;
+            };
+            return -1;
         }
     }
 }

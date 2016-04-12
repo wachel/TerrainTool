@@ -11,11 +11,6 @@ namespace TerrainTool
         }
         public TernaryOperatorType operatorType;
 
-        public NodeTernaryOperator(TernaryOperatorType op)
-        {
-            operatorType = op;
-        }
-
         public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
             float[,] values = new float[w, h];
@@ -41,6 +36,13 @@ namespace TerrainTool
         public override string[] GetInputNames()
         {
             return new string[] { "a", "s", "b" };
+        }
+        public override string GetExpression()
+        {
+            switch (operatorType) {
+                case TernaryOperatorType.Lerp:return "o = a*(1-s) + b*s";
+                default:return "";
+            }
         }
     }
 }

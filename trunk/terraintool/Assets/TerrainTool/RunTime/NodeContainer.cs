@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using System;
+using System.Reflection;
 
 namespace TerrainTool
 {
@@ -11,24 +12,15 @@ namespace TerrainTool
         public bool foldout = true;
         public Rect rect;
         public NodeBase node;
-        //public List<NodeContainer> inputs = new List<NodeContainer>();
         [NonSerialized]
         public int winID;
-        public float[,] previewTexture;
-
-        public Texture2D tex;
-        public bool bNeedUpdate;
+        public Texture2D texture;
+        public int oldHashCode;
 
         public void SetNode(NodeBase node)
         {
             this.node = node;
             node.container = this;
-            //while (node.inputs.Length > inputs.Count) {
-            //    inputs.Add(null);
-            //}
-            //while (node.inputs.Length < inputs.Count) {
-            //    inputs.RemoveAt(inputs.Count - 1);
-            //}
         }
         public float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
@@ -37,24 +29,25 @@ namespace TerrainTool
             }
             return new float[w, h];
         }
-        //public void updateInputNode()
-        //{
-        //    if (node != null) {
-        //        for (int i = 0; i < node.inputs.Length; i++) {
-        //            node.inputs[i] = inputs[i].node;
-        //        }
-        //    }
-        //}
-        public void updatePreview(int seed, int x, int y, int w, int h)
+        public void updatePreviewTexture(int seed, int x, int y, int w, int h)
         {
-            previewTexture = update(seed, x, y, w, h);
+            float[,] data = update(seed, x, y, w, h);
+            texture = new Texture2D(w, h);
+            Color[] colors = new Color[w * h];
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    colors[j * w + i] = new Color(data[i, j], data[i, j], data[i, j]);
+                }
+            }
+            texture.SetPixels(colors);
+            texture.Apply();
         }
-        public int GetHashCode()
+        public int GetMyHashCode()
         {
             int rlt = 0;
             if (node != null) {
-                foreach (var f in node.GetType().GetFields()) {
-                    var val = f.GetValue(this);
+                foreach (FieldInfo f in node.GetType().GetFields()) {
+                    var val = f.GetValue(node);
                     if (val != null) {
                         if (f.FieldType == typeof(AnimationCurve)) {
                             AnimationCurve c = (AnimationCurve)val;
@@ -65,7 +58,7 @@ namespace TerrainTool
                 }
                 for (int i = 0; i < node.inputs.Length; i++) {
                     if (node.inputs[i] != null) {
-                        rlt ^= node.inputs[i].GetHashCode();
+                        rlt ^= node.inputs[i].container.GetMyHashCode();
                     }
                 }
             }
@@ -94,6 +87,15 @@ namespace TerrainTool
         public Rect getOutputPortRect()
         {
             return new Rect(rect.x - 14, rect.center.y - 8, 14, 16);
+        }
+        public int GetSortValue()
+        {
+            int rlt = (int)node.nodeType * 1000;
+            rlt += node.subTypeIndex * 100;
+            if(node is TextureOutput) {
+                rlt += (node as TextureOutput).paintOrder;
+            }
+            return rlt;
         }
     }
 }

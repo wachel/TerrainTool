@@ -442,7 +442,7 @@ namespace TerrainTool
             Vector3 pos0 = new Vector3(fromPos.x, fromPos.y, 0);
             Vector3 pos1;
             Vector3 pos2;
-            float length = (Mathf.Abs(fromPos.x - toPos.x) + Mathf.Abs(fromPos.y - toPos.y)) * 0.8f + 20f;
+            float length = (Mathf.Abs(fromPos.x - toPos.x) + Mathf.Abs(fromPos.y - toPos.y)) * 0.0f + 60f;
             if (fromPos.x - toPos.x > length) {
                 pos1 = new Vector3((fromPos.x + toPos.x) * 0.5f, fromPos.y, 0);
                 pos2 = new Vector3((fromPos.x + toPos.x) * 0.5f, toPos.y, 0);
@@ -451,6 +451,8 @@ namespace TerrainTool
                 pos1 = new Vector3(fromPos.x - length * 0.5f, fromPos.y, 0);
                 pos2 = new Vector3(toPos.x + length * 0.5f, toPos.y, 0);
             }
+            //pos1 = new Vector3(fromPos.x - 50, fromPos.y, 0);
+            //pos2 = new Vector3(toPos.x + 50, toPos.y, 0);
             Vector3 pos3 = new Vector3(toPos.x, toPos.y, 0);
             Handles.DrawBezier(pos0, pos3, pos1, pos2, color, null, 3f);
             if (bArrow) {

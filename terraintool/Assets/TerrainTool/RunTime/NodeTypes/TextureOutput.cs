@@ -6,7 +6,6 @@ namespace TerrainTool
     public class TextureOutput : NodeBase
     {
         public int paintOrder = 0;
-        public int textureIndex = 0;
         public Texture2D texture;
         public Texture2D normal;
         public int texSizeX = 15;

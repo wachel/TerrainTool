@@ -143,6 +143,7 @@ namespace TerrainTool
         {
             AddNodeType(NodeType.Generator, "Const Value", () => { return ScriptableObject.CreateInstance<NodeConstValue>(); });
             AddNodeType(NodeType.Generator, "Perlin Noise", () => { return ScriptableObject.CreateInstance<NodePerlin>(); });
+            AddNodeType(NodeType.Generator, "Import", () => { return ScriptableObject.CreateInstance<NodeImport>(); });
             AddNodeType(NodeType.UnaryOperator, "Curve", () => { return ScriptableObject.CreateInstance<NodeCurve>(); });
             AddNodeType(NodeType.UnaryOperator, "Normal", () => { return ScriptableObject.CreateInstance<NodeNormal>(); });
             AddNodeType(NodeType.BinaryOperator, "Add", () => { return CreateBinaryOp(NodeBinaryOperator.BinaryOperatorType.Add); });

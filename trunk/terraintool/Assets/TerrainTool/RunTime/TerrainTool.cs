@@ -285,7 +285,7 @@ namespace TerrainTool
                             }
                         }
                     }
-                } 
+                }
 
 
                 List<TreeInstance> instances = GetTreeInstance(terr, true);

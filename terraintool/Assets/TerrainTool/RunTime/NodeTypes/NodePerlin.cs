@@ -13,6 +13,9 @@ namespace TerrainTool
         LibNoise.Unity.Generator.Perlin generator = new LibNoise.Unity.Generator.Perlin();
         public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {
+            if (size < 0.01) {
+                return new float[w, h];
+            }
             generator.Frequency = 1.0 / size;
             generator.OctaveCount = 1;
             generator.Seed = seed + localSeed;

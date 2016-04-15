@@ -10,6 +10,8 @@ namespace TerrainTool
     {
         [HideInInspector]
         public List<NodeContainer> nodeContainers = new List<NodeContainer>();
+        public Terrain target;
+        public GameObject entityContainer;
         public int seed;
         public int baseX, baseY;
         public void OnEnable()
@@ -49,20 +51,18 @@ namespace TerrainTool
         public void DoGenerate()
         {
             float startTime = Time.realtimeSinceStartup;
-            Terrain terr = Terrain.activeTerrain;
-            if (terr != null) {
-                updateTerrainHeight();
-                updateTerrainTexture();
-                updateTerrainGrass();
-                updateTerrainTree();
-                updateTerrainEntity();
+            if (target != null) {
+                updateTerrainHeight(target);
+                updateTerrainTexture(target);
+                updateTerrainGrass(target);
+                updateTerrainTree(target);
+                updateTerrainEntity(target);
             }
             Debug.Log("generate terrain time = " + (Time.realtimeSinceStartup - startTime));
         }
 
-        public void updateTerrainHeight()
+        public void updateTerrainHeight(Terrain terr)
         {
-            Terrain terr = Terrain.activeTerrain;
             if (terr != null) {
                 for (int i = 0; i < nodeContainers.Count; i++) {
                     if (nodeContainers[i].node is HeightOutput) {
@@ -76,9 +76,8 @@ namespace TerrainTool
             }
         }
 
-        public void updateTerrainTexture()
+        public void updateTerrainTexture(Terrain terr)
         {
-            Terrain terr = Terrain.activeTerrain;
             if (terr != null) {
                 List<SplatPrototype> prototypes = new List<SplatPrototype>();
                 List<TextureOutput> textureOutputs = new List<TextureOutput>();
@@ -133,9 +132,8 @@ namespace TerrainTool
             }
         }
 
-        public void updateTerrainGrass()
+        public void updateTerrainGrass(Terrain terr)
         {
-            Terrain terr = Terrain.activeTerrain;
             if (terr != null) {
                 List<DetailPrototype> detailList = new List<DetailPrototype>();
                 List<GrassOutput> grassOutputs = new List<GrassOutput>();
@@ -191,16 +189,16 @@ namespace TerrainTool
                         for (int x = 0; x < terrainWidth; x++) {
                             for (int y = 0; y < terrainHeight; y++) {
                                 int treeIndexForHash = treeNode.startTreePropertyIndex + (bEntity ? 999 : 0);
-                                int treeNum = treeNode.getTreeNum(x, y, values[x, y], treeNode.density, treeIndexForHash);
+                                int treeNum = treeNode.getTreeNum(baseX + x, baseY + y, values[x, y], treeNode.density, treeIndexForHash);
                                 for (int t = 0; t < treeNum; t++) {
-                                    Vector2 offset = (treeNode.getTreePos(x, y, t, pixelSize * 2f, treeIndexForHash));
-                                    Vector2 pos = new Vector2(y + offset.y, x + offset.x);//翻转x,y.
+                                    Vector2 offset = (treeNode.getTreePos(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
+                                    Vector2 pos = new Vector2(x + offset.x, y + offset.y);//翻转x,y.
                                     float height = terrain.terrainData.GetInterpolatedHeight(pos.x / terrainWidth, pos.y / terrainHeight) / terrain.terrainData.size.y;
                                     Vector3 newPos = new Vector3(pos.x / terrainWidth, height, pos.y / terrainHeight);
                                     treePos.Add(newPos);
-                                    treeAngles.Add(treeNode.GetAngle(x, y, t, pixelSize * 2f, treeIndexForHash));
-                                    treeScales.Add(treeNode.GetScale(x, y, t, pixelSize * 2f, treeIndexForHash));
-                                    prefabIndexs.Add(treeNode.GetPrefabIndex(x, y, t, pixelSize * 2f, treeIndexForHash));
+                                    treeAngles.Add(treeNode.GetAngle(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
+                                    treeScales.Add(treeNode.GetScale(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
+                                    prefabIndexs.Add(treeNode.GetPrefabIndex(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
                                 }
                             }
                         }
@@ -224,9 +222,8 @@ namespace TerrainTool
             return instances;
         }
 
-        public void updateTerrainTree()
+        public void updateTerrainTree(Terrain terr)
         {
-            Terrain terr = Terrain.activeTerrain;
             if (terr != null) {
                 List<TreePrototype> treeList = new List<TreePrototype>();
                 for (int i = 0; i < nodeContainers.Count; i++) {
@@ -251,9 +248,8 @@ namespace TerrainTool
             }
         }
 
-        public void updateTerrainEntity(Func<GameObject, GameObject> funNewObj = null)
+        public void updateTerrainEntity(Terrain terr,Func<GameObject, GameObject> funNewObj = null)
         {
-            Terrain terr = Terrain.activeTerrain;
             if (terr != null) {
                 List<TreePrototype> treeList = new List<TreePrototype>();
                 for (int i = 0; i < nodeContainers.Count; i++) {
@@ -271,7 +267,7 @@ namespace TerrainTool
                     }
                 }
 
-                GameObject container = GameObject.Find("auto_tree");
+                GameObject container = entityContainer;
                 if (container == null) {
                     container = new GameObject("auto_tree");
                 }
@@ -294,7 +290,7 @@ namespace TerrainTool
                     GameObject prefab = treeList[instances[i].prototypeIndex].prefab;
                     GameObject obj = (funNewObj == null) ? GameObject.Instantiate(prefab) : funNewObj(prefab);
                     obj.transform.SetParent(container.transform, true);
-                    obj.transform.position = Vector3.Scale(instances[i].position, terr.terrainData.size);
+                    obj.transform.position = Vector3.Scale(instances[i].position, terr.terrainData.size) + container.transform.position;
                     obj.transform.rotation = prefab.transform.rotation * Quaternion.AngleAxis(instances[i].rotation, Vector3.up);
                     obj.transform.localScale = new Vector3(instances[i].widthScale, instances[i].heightScale, instances[i].widthScale);
                     obj.transform.name = prefab.name;

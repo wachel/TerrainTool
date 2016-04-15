@@ -113,7 +113,7 @@ namespace TerrainTool
                         }
                     }
                     if (tempNode != null) {
-                        float[,] values = tempNode.update(seed, baseX, baseY, w, h, scaleX, scaleY);
+                        float[,] values = tempNode.update(seed, (int)(baseX/scaleX), (int)(baseY/scaleY), w, h, scaleX, scaleY);
                         for (int i = 0; i < w; i++) {
                             for (int j = 0; j < h; j++) {
                                 if (totalAlpha[i, j] + values[i, j] <= 1.00001f) {
@@ -155,7 +155,7 @@ namespace TerrainTool
                 int layers = terr.terrainData.detailPrototypes.Length;
                 for (int layer = 0; layer < grassOutputs.Count; layer++) {
                     GrassOutput texNode = grassOutputs[layer];
-                    float[,] values = texNode.update(seed, baseX, baseY, w, h, scaleX, scaleY);
+                    float[,] values = texNode.update(seed, (int)(baseX / scaleX), (int)(baseY / scaleY), w, h, scaleX, scaleY);
                     int[,] detailValues = new int[w, h];
                     for (int x = 0; x < w; x++) {
                         for (int y = 0; y < h; y++) {

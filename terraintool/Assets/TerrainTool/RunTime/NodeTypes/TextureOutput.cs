@@ -11,17 +11,17 @@ namespace TerrainTool
         public int texSizeX = 15;
         public int texSizeY = 15;
 
-        public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public override float[,] update(int seed, int width, int height, Rect rect)
         {
             float[,] values = null;
             if (inputs[0] != null) {
-                values = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
+                values = inputs[0].update(seed, width, height, rect);
             }
             else {
-                values = new float[w, h];
+                values = new float[width, height];
             }
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
                     values[i, j] = Mathf.Clamp(values[i, j] * scale + bias, 0f, 1f);
                 }
             }

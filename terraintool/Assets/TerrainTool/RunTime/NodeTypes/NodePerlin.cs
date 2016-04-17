@@ -11,31 +11,31 @@ namespace TerrainTool
         public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
         LibNoise.Unity.Generator.Perlin generator = new LibNoise.Unity.Generator.Perlin();
-        public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public override float[,] update(int seed, int width, int height, Rect rect)
         {
             if (size < 0.01) {
-                return new float[w, h];
+                return new float[width, height];
             }
             generator.Frequency = 1.0 / size;
             generator.OctaveCount = 1;
             generator.Seed = seed + localSeed;
             generator.Quality = LibNoise.Unity.QualityMode.High;
 
-            string key = PerlinCache.makeKey("perlin", generator.Frequency, generator.Seed, octaveCount, x, y, w, h, scaleX, scaleY, curve);
+            string key = PerlinCache.makeKey("perlin", generator.Frequency, generator.Seed, octaveCount, width, height, rect, curve);
             float[,] temp = null;
             if (PerlinCache.hasKey(key)) {
                 temp = PerlinCache.getCache(key);
             }
             else {
-                temp = new float[w, h];
-                for (int i = 0; i < w; i++) {
-                    for (int j = 0; j < h; j++) {
-                        float tempX = x + i;
-                        float tempY = y + j;
+                temp = new float[width, height];
+                for (int i = 0; i < width; i++) {
+                    for (int j = 0; j < height; j++) {
+                        float tempX = rect.x + rect.width*i/(float)width;
+                        float tempY = rect.y + rect.height*j/(float)height;;
                         float val = 0f;
                         float cp = 0.5f;
                         for (int o = 0; o < octaveCount; o++) {
-                            float signal = (float)generator.GetValue(tempX * scaleX, tempY * scaleY, 0);
+                            float signal = (float)generator.GetValue(tempX, tempY, 0);
                             val += (curve.Evaluate(signal * 0.4f + 0.5f) - 0.5f) * 2f * cp;
                             tempX *= 1.93456789f;
                             tempY *= 1.93456789f;
@@ -46,9 +46,9 @@ namespace TerrainTool
                 }
                 PerlinCache.addCache(key, temp);
             }
-            float[,] values = new float[w, h];
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
+            float[,] values = new float[width, height];
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
                     values[i, j] = temp[i, j] * scale + bias;
                 }
             }

@@ -16,22 +16,23 @@ namespace TerrainTool
         public int winID;
         public Texture2D texture;
         public int oldHashCode;
-
+        [HideInInspector]
+        public TerrainTool container;
         public void SetNode(NodeBase node)
         {
             this.node = node;
             node.container = this;
         }
-        public float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public float[,] update(int seed, int w, int h, Rect rect)
         {
             if (node != null) {
-                return node.update(seed, x, y, w, h, scaleX, scaleY);
+                return node.update(seed,  w, h, rect);
             }
             return new float[w, h];
         }
-        public void updatePreviewTexture(int seed, int x, int y, int w, int h)
+        public void updatePreviewTexture(int seed, int w, int h)
         {
-            float[,] data = update(seed, x, y, w, h);
+            float[,] data = update(seed, w, h,new Rect(0,0,w,h));
             texture = new Texture2D(w, h);
             Color[] colors = new Color[w * h];
             for (int i = 0; i < w; i++) {

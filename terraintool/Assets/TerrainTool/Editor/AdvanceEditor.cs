@@ -11,7 +11,9 @@ namespace TerrainTool
     class AdvanceEditor : EditorWindow
     {
         //for drag window
-        private Vector2 scrollPosition;
+        private Vector2 scrollPosition = new Vector2(0,0);
+        private int workspaceWidth = 4000;
+        private int workspaceHeight = 4000;
         private bool bDragingWindow = false;
         private bool bDragingInputLine = false;
         private bool bDragingOutputLine = false;
@@ -55,8 +57,8 @@ namespace TerrainTool
 
             splitRect.Set(position.width - toolWindowWidth, 0, 5, position.height);
 
-            maxRect.Set(0, 0, position.width - toolWindowWidth, position.height);
-
+            maxRect.Set(-workspaceWidth/2,-workspaceHeight/2, workspaceWidth,workspaceHeight);//position.width - toolWindowWidth, position.height);
+            scrollPosition = new Vector2(workspaceWidth / 2 - splitRect.x/2, workspaceHeight / 2 - position.height/2);
 
             texPort = new Texture2D(1, 1);
             texPort.SetPixel(0, 0, new Color(1, 1, 1));
@@ -88,13 +90,13 @@ namespace TerrainTool
                 GUI.DrawTexture(new Rect(0, 0, splitRect.x, position.height), splitColor);
                 scrollPosition = GUI.BeginScrollView(new Rect(0, 0, splitRect.x, position.height), scrollPosition, maxRect, true, true);
 
-                maxRect.Set(0, 0, splitRect.x, position.height);
+                //maxRect.Set(0, 0, splitRect.x, position.height);
                 BeginWindows();
                 {
                     foreach (var n in nodeContainers) {
                         Rect r = DrawNodeWindow(n);
-                        maxRect.width = r.xMax > maxRect.width ? r.xMax : maxRect.width;
-                        maxRect.height = r.yMax > maxRect.height ? r.yMax : maxRect.height;
+                        //maxRect.width = r.xMax > maxRect.width ? r.xMax : maxRect.width;
+                        //maxRect.height = r.yMax > maxRect.height ? r.yMax : maxRect.height;
                         if(r != n.rect) {
                             EditorUtility.SetDirty(target);
                         }
@@ -121,8 +123,8 @@ namespace TerrainTool
 
         private Rect DrawNodeWindow(NodeContainer container)
         {
-            container.rect.x = container.rect.x < 0 ? 0 : container.rect.x;
-            container.rect.y = container.rect.y < 0 ? 0 : container.rect.y;
+            //container.rect.x = container.rect.x < 0 ? 0 : container.rect.x;
+            //container.rect.y = container.rect.y < 0 ? 0 : container.rect.y;
             container.rect = GUI.Window(container.winID, container.rect, (int id) => { DoNodeWindowGUI(container); }, "");
 
             if (container.hasOutput()) {
@@ -151,7 +153,7 @@ namespace TerrainTool
             }
             int newHashCode = container.GetMyHashCode();
             if (container.oldHashCode != newHashCode) {
-                container.updatePreviewTexture(target.seed, 0, 0, 128, 128);
+                container.updatePreviewTexture(target.seed,128, 128);
                 container.oldHashCode = newHashCode;
             }
             GUI.Box(new Rect(0, 16, container.rect.width, container.rect.height - 16), container.texture);
@@ -344,10 +346,14 @@ namespace TerrainTool
 
         void AddNode(NodeBase node,Vector2 pos)
         {
+            node.name = getNewName(node.name);
             NodeContainer c = ScriptableObject.CreateInstance<NodeContainer>();
             c.SetNode(node);
             c.winID = getNewWinID();
-            c.rect = new Rect(pos, new Vector2(128, 128 + 16));
+            c.rect = new Rect(pos + scrollPosition - new Vector2(workspaceWidth/2,workspaceHeight/2), new Vector2(128, 128 + 16));
+            c.rect.x = (int)c.rect.x;
+            c.rect.y = (int)c.rect.y;
+            c.container = target;
             nodeContainers.Add(c);
 
             target.Sort();
@@ -424,7 +430,7 @@ namespace TerrainTool
                 string temp = label + i.ToString();
                 bool bFound = false;
                 foreach(var n in nodeContainers){
-                    if (n.name == temp) {
+                    if (n.node.name == temp) {
                         bFound = true;
                         break;
                     }
@@ -475,6 +481,7 @@ class SerializedObjectDrawer : Editor
             so.ApplyModifiedProperties();
             return true;
         }
+
         return false;
     }
 }

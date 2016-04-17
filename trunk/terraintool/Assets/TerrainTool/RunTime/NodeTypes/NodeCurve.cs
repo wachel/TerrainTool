@@ -7,19 +7,19 @@ namespace TerrainTool
     {
         public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
-        public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public override float[,] update(int seed, int width, int height, Rect rect)
         {
-            float[,] values = new float[w, h];
+            float[,] values = new float[width, height];
             if (inputs[0] != null) {
-                float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                for (int i = 0; i < w; i++) {
-                    for (int j = 0; j < h; j++) {
+                float[,] a = inputs[0].update(seed, width, height, rect);
+                for (int i = 0; i < width; i++) {
+                    for (int j = 0; j < height; j++) {
                         values[i, j] = curve.Evaluate(a[i, j]);
                     }
                 }
             }
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
                     values[i, j] = values[i, j] * scale + bias;
                 }
             }

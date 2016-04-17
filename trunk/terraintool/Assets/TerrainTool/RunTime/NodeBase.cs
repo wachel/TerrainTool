@@ -12,6 +12,7 @@ namespace TerrainTool
         BinaryOperator,
         TernaryOperator,
         Output,
+        Refrence,
     }
 
     public abstract class NodeBase : ScriptableObject
@@ -33,7 +34,7 @@ namespace TerrainTool
         public virtual string GetExpression() { return ""; }
         [HideInInspector]
         public NodeBase[] inputs = new NodeBase[0];
-        public abstract float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f);
+        public abstract float[,] update(int seed ,int width, int height, Rect rect);
     }
 
     public static class PerlinCache
@@ -52,19 +53,19 @@ namespace TerrainTool
             return hashString.PadLeft(32, '0');
         }
 
-        public static string makeKey(string model, double frequency, int octaveCount, int seed, int x, int y, int w, int h, float scaleX, float scaleY, AnimationCurve curve)
+        public static string makeKey(string model, double frequency, int octaveCount, int seed, int w, int h, Rect rect, AnimationCurve curve)
         {
             string temp = "";
             temp += model;
             temp += "f" + frequency.ToString();
             temp += "s" + seed.ToString();
             temp += "o" + octaveCount.ToString();
-            temp += "x" + x.ToString();
-            temp += "y" + y.ToString();
+            temp += "x" + rect.x.ToString();
+            temp += "y" + rect.y.ToString();
             temp += "w" + w.ToString();
             temp += "h" + h.ToString();
-            temp += "sx" + scaleX.ToString();
-            temp += "sy" + scaleY.ToString();
+            temp += "sx" + rect.width.ToString();
+            temp += "sy" + rect.height.ToString();
             temp += "c" + getCurveHash(curve).ToString();
             return Md5Sum(temp);
         }
@@ -155,6 +156,7 @@ namespace TerrainTool
             AddNodeType(NodeType.Output, "Texture", () => { return ScriptableObject.CreateInstance<TextureOutput>(); });
             AddNodeType(NodeType.Output, "Grass", () => { return ScriptableObject.CreateInstance<GrassOutput>(); });
             AddNodeType(NodeType.Output, "Tree", () => { return ScriptableObject.CreateInstance<TreeOutput>(); });
+            AddNodeType(NodeType.Refrence, "Refrence", () => { return ScriptableObject.CreateInstance<NodeRefrence>(); });
         }
         public string[] GetSubTypes(NodeType type)
         {

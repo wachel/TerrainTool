@@ -17,18 +17,15 @@ namespace TerrainTool
         public void OnEnable()
         {
             if (nodeContainers.Count == 0) {
-                {
-                    NodeContainer temp = new NodeContainer();
-                    temp.SetNode(NodeMaker.Instance.CreateNode(NodeType.Output));
-                    temp.rect = new Rect(0, 0, 128, 128 + 16);
-                    nodeContainers.Add(temp);
-                }
-                {
-                    NodeContainer temp = new NodeContainer();
-                    temp.SetNode(NodeMaker.Instance.CreateNode(NodeType.Generator));
-                    temp.rect = new Rect(100, 200, 128, 128 + 16);
-                    nodeContainers.Add(temp);
-                }
+                NodeContainer height = new NodeContainer();
+                height.SetNode(NodeMaker.Instance.CreateNode(NodeType.Output));
+                height.rect = new Rect(-200, -120, 128, 128 + 16);
+                nodeContainers.Add(height);
+                NodeContainer perlin = new NodeContainer();
+                perlin.SetNode(NodeMaker.Instance.CreateNode(NodeType.Generator, "Perlin Noise"));
+                perlin.rect = new Rect(100, -120, 128, 128 + 16);
+                nodeContainers.Add(perlin);
+                height.node.inputs[0] = perlin.node;
             }
         }
 
@@ -37,6 +34,11 @@ namespace TerrainTool
             nodeContainers.Sort((NodeContainer item0, NodeContainer item1) => {
                 return item0.GetSortValue() - item1.GetSortValue();
             });
+        }
+
+        public NodeContainer Find(string name)
+        {
+            return nodeContainers.Find((NodeContainer n) => n.node.name == name);
         }
 
         public void OnBeforeSerialize()
@@ -68,7 +70,9 @@ namespace TerrainTool
                     if (nodeContainers[i].node is HeightOutput) {
                         int w = terr.terrainData.heightmapWidth;
                         int h = terr.terrainData.heightmapHeight;
-                        float[,] values = nodeContainers[i].node.update(seed, baseX, baseY, w, h);
+                        float realWidth = terr.terrainData.size.x;
+                        float realHeight = terr.terrainData.size.z;
+                        float[,] values = nodeContainers[i].node.update(seed, w, h, new Rect(baseX,baseY,realWidth,realHeight));
                         terr.terrainData.SetHeights(0, 0, values);
                         break;
                     }
@@ -100,9 +104,9 @@ namespace TerrainTool
                 terr.terrainData.splatPrototypes = prototypes.ToArray();
                 int w = terr.terrainData.alphamapWidth;
                 int h = terr.terrainData.alphamapHeight;
+                float realWidth = terr.terrainData.size.x;
+                float realHeight = terr.terrainData.size.z;
                 float[,] totalAlpha = new float[w, h];
-                float scaleX = terr.terrainData.heightmapWidth / ((float)w);
-                float scaleY = terr.terrainData.heightmapHeight / ((float)w);
                 int layers = terr.terrainData.alphamapLayers;
                 float[,,] alphaDatas = new float[w, h, layers];
                 for (int ly = layers - 1; ly >= 0; ly--) {
@@ -113,7 +117,7 @@ namespace TerrainTool
                         }
                     }
                     if (tempNode != null) {
-                        float[,] values = tempNode.update(seed, (int)(baseX/scaleX), (int)(baseY/scaleY), w, h, scaleX, scaleY);
+                        float[,] values = tempNode.update(seed, w, h, new Rect(baseX, baseY, realWidth, realHeight));
                         for (int i = 0; i < w; i++) {
                             for (int j = 0; j < h; j++) {
                                 if (totalAlpha[i, j] + values[i, j] <= 1.00001f) {
@@ -150,12 +154,12 @@ namespace TerrainTool
                 terr.terrainData.detailPrototypes = detailList.ToArray();
                 int w = terr.terrainData.detailWidth;
                 int h = terr.terrainData.detailHeight;
-                float scaleX = terr.terrainData.heightmapWidth / ((float)w);
-                float scaleY = terr.terrainData.heightmapHeight / ((float)w);
+                float realWidth = terr.terrainData.size.x;
+                float realHeight = terr.terrainData.size.z;
                 int layers = terr.terrainData.detailPrototypes.Length;
                 for (int layer = 0; layer < grassOutputs.Count; layer++) {
                     GrassOutput texNode = grassOutputs[layer];
-                    float[,] values = texNode.update(seed, (int)(baseX / scaleX), (int)(baseY / scaleY), w, h, scaleX, scaleY);
+                    float[,] values = texNode.update(seed, w, h, new Rect(baseX, baseY, realWidth, realHeight));
                     int[,] detailValues = new int[w, h];
                     for (int x = 0; x < w; x++) {
                         for (int y = 0; y < h; y++) {
@@ -169,18 +173,21 @@ namespace TerrainTool
             }
         }
 
-        private List<TreeInstance> GetTreeInstance(Terrain terrain, bool bEntity)
+        private List<TreeInstance> GetTreeInstance(Terrain terr, bool bEntity)
         {
-            int terrainWidth = terrain.terrainData.heightmapWidth;
-            int terrainHeight = terrain.terrainData.heightmapHeight;
-            float pixelSize = terrain.terrainData.size.x / terrainWidth;
+            int terrainWidth = terr.terrainData.heightmapWidth;
+            int terrainHeight = terr.terrainData.heightmapHeight;
+            float realWidth = terr.terrainData.size.x;
+            float realHeight = terr.terrainData.size.z;
+
+            float pixelSize = terr.terrainData.size.x / terrainWidth;
 
             List<TreeInstance> instances = new List<TreeInstance>();
             for (int n = 0; n < nodeContainers.Count; n++) {
                 if (nodeContainers[n].node is TreeOutput) {
                     TreeOutput treeNode = nodeContainers[n].node as TreeOutput;
                     if (bEntity == treeNode.isEntity) {
-                        float[,] values = treeNode.update(seed, baseX, baseY, terrainWidth, terrainHeight, 1f, 1f);
+                        float[,] values = treeNode.update(seed, terrainWidth, terrainHeight, new Rect(baseX, baseY, realWidth, realHeight));
                         List<Vector3> treePos = new List<Vector3>();
                         List<float> treeAngles = new List<float>();
                         List<float> treeScales = new List<float>();
@@ -193,7 +200,7 @@ namespace TerrainTool
                                 for (int t = 0; t < treeNum; t++) {
                                     Vector2 offset = (treeNode.getTreePos(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
                                     Vector2 pos = new Vector2(x + offset.x, y + offset.y);//翻转x,y.
-                                    float height = terrain.terrainData.GetInterpolatedHeight(pos.x / terrainWidth, pos.y / terrainHeight) / terrain.terrainData.size.y;
+                                    float height = terr.terrainData.GetInterpolatedHeight(pos.x / terrainWidth, pos.y / terrainHeight) / terr.terrainData.size.y;
                                     Vector3 newPos = new Vector3(pos.x / terrainWidth, height, pos.y / terrainHeight);
                                     treePos.Add(newPos);
                                     treeAngles.Add(treeNode.GetAngle(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));

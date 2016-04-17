@@ -13,15 +13,15 @@ namespace TerrainTool
             Max,
         }
         public BinaryOperatorType operatorType;
-        public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public override float[,] update(int seed, int width, int height, Rect rect)
         {
-            float[,] values = new float[w, h];
+            float[,] values = new float[width, height];
             if (operatorType == BinaryOperatorType.Add) {
                 if (inputs[0] != null && inputs[1] != null) {
-                    float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] b = inputs[1].update(seed, x, y, w, h, scaleX, scaleY);
-                    for (int i = 0; i < w; i++) {
-                        for (int j = 0; j < h; j++) {
+                    float[,] a = inputs[0].update(seed, width, height, rect);
+                    float[,] b = inputs[1].update(seed, width, height, rect);
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
                             values[i, j] = a[i, j] + b[i, j];
                         }
                     }
@@ -29,10 +29,10 @@ namespace TerrainTool
             }
             else if (operatorType == BinaryOperatorType.Sub) {
                 if (inputs[0] != null && inputs[1] != null) {
-                    float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] b = inputs[1].update(seed, x, y, w, h, scaleX, scaleY);
-                    for (int i = 0; i < w; i++) {
-                        for (int j = 0; j < h; j++) {
+                    float[,] a = inputs[0].update(seed, width, height, rect);
+                    float[,] b = inputs[1].update(seed, width, height, rect);
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
                             values[i, j] = a[i, j] - b[i, j];
                         }
                     }
@@ -40,10 +40,10 @@ namespace TerrainTool
             }
             else if (operatorType == BinaryOperatorType.Mul) {
                 if (inputs[0] != null && inputs[1] != null) {
-                    float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] b = inputs[1].update(seed, x, y, w, h, scaleX, scaleY);
-                    for (int i = 0; i < w; i++) {
-                        for (int j = 0; j < h; j++) {
+                    float[,] a = inputs[0].update(seed, width, height, rect);
+                    float[,] b = inputs[1].update(seed, width, height, rect);
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
                             values[i, j] = a[i, j] * b[i, j];
                         }
                     }
@@ -51,17 +51,17 @@ namespace TerrainTool
             }
             else if (operatorType == BinaryOperatorType.Max) {
                 if (inputs[0] != null && inputs[1] != null) {
-                    float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] b = inputs[1].update(seed, x, y, w, h, scaleX, scaleY);
-                    for (int i = 0; i < w; i++) {
-                        for (int j = 0; j < h; j++) {
+                    float[,] a = inputs[0].update(seed, width, height, rect);
+                    float[,] b = inputs[1].update(seed, width, height, rect);
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
                             values[i, j] = a[i, j] > b[i, j] ? a[i, j] : b[i, j];
                         }
                     }
                 }
             }
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
                     values[i, j] = values[i, j] * scale + bias;
                 }
             }

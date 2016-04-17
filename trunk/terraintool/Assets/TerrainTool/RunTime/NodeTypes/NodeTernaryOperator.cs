@@ -11,23 +11,23 @@ namespace TerrainTool
         }
         public TernaryOperatorType operatorType;
 
-        public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
+        public override float[,] update(int seed, int width, int height, Rect rect)
         {
-            float[,] values = new float[w, h];
+            float[,] values = new float[width, height];
             if (operatorType == TernaryOperatorType.Lerp) {
                 if (inputs[0] != null && inputs[1] != null && inputs[2] != null) {
-                    float[,] a = inputs[0].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] s = inputs[1].update(seed, x, y, w, h, scaleX, scaleY);
-                    float[,] b = inputs[2].update(seed, x, y, w, h, scaleX, scaleY);
-                    for (int i = 0; i < w; i++) {
-                        for (int j = 0; j < h; j++) {
+                    float[,] a = inputs[0].update(seed, width, height, rect);
+                    float[,] s = inputs[1].update(seed, width, height, rect);
+                    float[,] b = inputs[2].update(seed, width, height, rect);
+                    for (int i = 0; i < width; i++) {
+                        for (int j = 0; j < height; j++) {
                             values[i, j] = Mathf.Lerp(a[i, j], b[i, j], s[i, j]);
                         }
                     }
                 }
             }
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < height; j++) {
                     values[i, j] = values[i, j] * scale + bias;
                 }
             }

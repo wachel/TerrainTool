@@ -6,6 +6,7 @@ namespace TerrainTool
     public class NodeImport : NodeBase
     {
         public Texture2D texture;
+        public Rect rect;
 
         public override float[,] update(int seed, int x, int y, int w, int h, float scaleX = 1.0f, float scaleY = 1.0f)
         {

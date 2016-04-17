@@ -7,6 +7,8 @@ namespace TerrainTool
     {
         public Rect rect = new Rect(0,0,100,100);
         public Texture2D texture;
+        [RawFile]
+        public string rawFile;
         public float defaultValue;
 
         public override float[,] update(int seed, int width, int height, Rect rect)

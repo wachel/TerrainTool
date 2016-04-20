@@ -70,8 +70,8 @@ namespace TerrainTool
                     if (nodeContainers[i].node is HeightOutput) {
                         int w = terr.terrainData.heightmapWidth;
                         int h = terr.terrainData.heightmapHeight;
-                        float realWidth = terr.terrainData.size.x;
-                        float realHeight = terr.terrainData.size.z;
+                        float realWidth = terr.terrainData.size.x * (1 + 1f / w);
+                        float realHeight = terr.terrainData.size.z * (1 + 1f / h);
                         float[,] values = nodeContainers[i].node.update(seed, w, h, new Rect(baseX,baseY,realWidth,realHeight));
                         terr.terrainData.SetHeights(0, 0, values);
                         break;
@@ -199,7 +199,7 @@ namespace TerrainTool
                                 int treeNum = treeNode.getTreeNum(baseX + x, baseY + y, values[x, y], treeNode.density, treeIndexForHash);
                                 for (int t = 0; t < treeNum; t++) {
                                     Vector2 offset = (treeNode.getTreePos(baseX + x, baseY + y, t, pixelSize * 2f, treeIndexForHash));
-                                    Vector2 pos = new Vector2(x + offset.x, y + offset.y);//翻转x,y.
+                                    Vector2 pos = new Vector2(y + offset.y, x + offset.x);//翻转x,y.
                                     float height = terr.terrainData.GetInterpolatedHeight(pos.x / terrainWidth, pos.y / terrainHeight) / terr.terrainData.size.y;
                                     Vector3 newPos = new Vector3(pos.x / terrainWidth, height, pos.y / terrainHeight);
                                     treePos.Add(newPos);

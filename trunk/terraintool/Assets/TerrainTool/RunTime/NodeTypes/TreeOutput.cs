@@ -97,7 +97,7 @@ namespace TerrainTool
                 hashCode = getHash(hashCode);
                 hashCode = getHash(hashCode);
                 hashCode = getHash(hashCode);
-                int rlt = (int)(Mathf.Abs(hashCode & 0xffffffff) % prefabs.Length);
+                int rlt = (int)((hashCode & 0xffffff) % prefabs.Length);
                 return rlt;
             };
             return 0;

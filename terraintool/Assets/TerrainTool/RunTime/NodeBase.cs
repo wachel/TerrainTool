@@ -35,6 +35,11 @@ namespace TerrainTool
         [HideInInspector]
         public NodeBase[] inputs = new NodeBase[0];
         public abstract float[,] update(int seed ,int width, int height, Rect rect);
+        public float[,] updatePreview(int seed,int width,int height)
+        {
+            return update(seed, width, height, new Rect(0, 0, width, height));
+        }
+        public virtual void Init() { }
     }
 
     public static class PerlinCache
@@ -212,6 +217,7 @@ namespace TerrainTool
             if(nodeType.type == NodeType.Output) {
                 rlt.isPublic = true;
             }
+            rlt.Init();
             return rlt;
         }
     }

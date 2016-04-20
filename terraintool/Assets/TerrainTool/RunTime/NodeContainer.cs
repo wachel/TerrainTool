@@ -32,7 +32,7 @@ namespace TerrainTool
         }
         public void updatePreviewTexture(int seed, int w, int h)
         {
-            float[,] data = update(seed, w, h,new Rect(0,0,w,h));
+            float[,] data = node != null ? node.updatePreview(seed, w, h) : new float[w, h];
             texture = new Texture2D(w, h);
             Color[] colors = new Color[w * h];
             for (int i = 0; i < w; i++) {

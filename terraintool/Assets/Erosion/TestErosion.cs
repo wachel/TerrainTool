@@ -12,11 +12,14 @@ public class TestErosion : MonoBehaviour
 
     private RenderBuffer[] rb0 = new RenderBuffer[3];
     private RenderBuffer[] rb1 = new RenderBuffer[3];
+    private RenderBuffer depthBuffer;
+
     void Start()
     {
         rb0[0] = rt0[0].colorBuffer;
         rb0[1] = rt0[1].colorBuffer;
         rb0[2] = rt0[2].colorBuffer;
+        depthBuffer = rt0[0].depthBuffer;
 
         for (int i = 0; i<3; i++) {
             rt1[i] = new RenderTexture(rt0[0].width, rt0[0].height, 24, RenderTextureFormat.ARGBFloat);
@@ -41,29 +44,25 @@ public class TestErosion : MonoBehaviour
         GL.Clear(true, true, Color.black);
     }
 
-
-    void Update()
+    void Draw(RenderTexture[] srcTextuers, RenderBuffer[] targetBuffers)
     {
-        GL.PushMatrix();                             
+        GL.PushMatrix();
         GL.LoadPixelMatrix(0, 512, 512, 0);
 
-        if (num % 2 == 0) {
-            mat.SetTexture("_OutFlow", rt0[1]);
-            mat.SetTexture("_Velocity", rt0[2]);
-            Graphics.SetRenderTarget(rb1,rt1[0].depthBuffer);
-            Graphics.DrawTexture(new Rect(0, 0, 512, 512), rt0[0], mat);
-        }
-        else {
-            mat.SetTexture("_OutFlow", rt1[1]);
-            mat.SetTexture("_Velocity", rt1[2]);
-            Graphics.SetRenderTarget(rb0, rt0[0].depthBuffer);
-            Graphics.DrawTexture(new Rect(0, 0, 512, 512), rt1[0], mat);
-        }
+        mat.SetTexture("_OutFlow", srcTextuers[1]);
+        mat.SetTexture("_Velocity", srcTextuers[2]);
+        Graphics.SetRenderTarget(targetBuffers, depthBuffer);
+        Graphics.DrawTexture(new Rect(0, 0, 512, 512), srcTextuers[0], mat);
 
         GL.PopMatrix();
         Graphics.SetRenderTarget(null);
-    
-        num++;                                                             
+        //GL.End();
+    }
+
+    void Update()
+    {
+        Draw(rt0, rb1);
+        Draw(rt1, rb0);
     }
 }
 

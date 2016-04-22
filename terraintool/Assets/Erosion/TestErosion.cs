@@ -16,47 +16,54 @@ public class TestErosion : MonoBehaviour
 
     void Start()
     {
-        rb0[0] = rt0[0].colorBuffer;
-        rb0[1] = rt0[1].colorBuffer;
-        rb0[2] = rt0[2].colorBuffer;
-        depthBuffer = rt0[0].depthBuffer;
-
         for (int i = 0; i<3; i++) {
+            rb0[i] = rt0[i].colorBuffer;
+            rt0[i].filterMode = FilterMode.Point;
+
             rt1[i] = new RenderTexture(rt0[0].width, rt0[0].height, 24, RenderTextureFormat.ARGBFloat);
+            rt1[i].generateMips = false;
+            rt1[i].useMipMap = false;
+            rt1[i].filterMode = FilterMode.Point;
             rb1[i] = rt1[i].colorBuffer;
         }
-        mat.SetTexture("_MainTex", startTexture);
-        mat.SetTexture("_OutFlow", startTexture);
-        mat.SetTexture("_Velocity", startTexture);
+        depthBuffer = rt0[0].depthBuffer;
 
-        Graphics.SetRenderTarget(rb0, rt0[0].depthBuffer);
+        Clear(rt0);
+        Clear(rt1);
+
+        mat.SetTexture("_MainTex", startTexture);
+        Graphics.SetRenderTarget(rb0, depthBuffer);
         Graphics.Blit(startTexture, mat);
         Graphics.SetRenderTarget(null);
     }
 
     public void OnDestroy()
     {
-        Graphics.SetRenderTarget(rt0[0]);
-        GL.Clear(true, true, Color.black);
-        Graphics.SetRenderTarget(rt0[1]);
-        GL.Clear(true, true, Color.black);
-        Graphics.SetRenderTarget(rt0[2]);
-        GL.Clear(true, true, Color.black);
+        Clear(rt0);
+        Clear(rt1);
+    }
+
+    void Clear(RenderTexture[] rts)
+    {
+        for(int i =0; i<rts.Length; i++) {
+            Graphics.SetRenderTarget(rts[i]);
+            GL.Clear(true, true, Color.black);
+        }
+        Graphics.SetRenderTarget(null);
     }
 
     void Draw(RenderTexture[] srcTextuers, RenderBuffer[] targetBuffers)
     {
         GL.PushMatrix();
-        GL.LoadPixelMatrix(0, 512, 512, 0);
+        GL.LoadPixelMatrix(0, 1, 1, 0);
 
-        mat.SetTexture("_OutFlow", srcTextuers[1]);
+        mat.SetTexture("_InFlow", srcTextuers[1]);
         mat.SetTexture("_Velocity", srcTextuers[2]);
         Graphics.SetRenderTarget(targetBuffers, depthBuffer);
-        Graphics.DrawTexture(new Rect(0, 0, 512, 512), srcTextuers[0], mat);
+        Graphics.DrawTexture(new Rect(0, 0, 1, 1), srcTextuers[0], mat);
 
         GL.PopMatrix();
         Graphics.SetRenderTarget(null);
-        //GL.End();
     }
 
     void Update()

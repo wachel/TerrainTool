@@ -112,7 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b767b6cfa40fdd40af0774cd588445e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startTexture: {fileID: 2800000, guid: b557e73da47a32f43b410624d92d1055, type: 3}
+  startTexture: {fileID: 2800000, guid: 18214e9d6af6248559d501391856f1c7, type: 3}
   rt0:
   - {fileID: 8400000, guid: 30ce3347c6938d34eabcde56e78d7f94, type: 2}
   - {fileID: 8400000, guid: 8fee5d8cb1db7564386ec635ec0c0a7d, type: 2}

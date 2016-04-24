@@ -71,59 +71,61 @@
 
 				//neighbour
 				float4 heightL = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(-1,0));
-				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(1,0));
+				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2( 1,0));
 				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
-				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,1));
+				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
 
 				//inflow
 				float4 inflowL = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2(-1,0));
-				float4 inflowR = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2(1,0));
+				float4 inflowR = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2( 1,0));
 				float4 inflowB = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2(0,-1));
-				float4 inflowT = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2(0,1));
+				float4 inflowT = tex2D(_InFlow,i.uv + _InFlow_TexelSize.xy * half2(0, 1));
 
 				//velocity
 				float2 velocityL = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2(-1, 0));
-				float2 velocityR = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2(1, 0));
+				float2 velocityR = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2( 1, 0));
 				float2 velocityB = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2(0, -1));
-				float2 velocityT = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2(0, 1));
+				float2 velocityT = tex2D(_Velocity, i.uv + _Velocity_TexelSize.xy * half2(0,  1));
 
 				//name
 				float terrainHeight = height.x;
 				float waterHeight = height.y;
-				float top = terrainHeight + waterHeight;
+				float sufaceHeight = terrainHeight + waterHeight;
+
+				float speed = length(velocity);
+				float2 dir = float2(sign(velocity.x),sign(velocity.y));
 
 				//deltaTop
-				float diffTopL = (top - (heightL.x + heightL.y) + -velocity.x) * 0.5;
-				float diffTopR = (top - (heightR.x + heightR.y) +  velocity.x) * 0.5;
-				float diffTopB = (top - (heightB.x + heightB.y) + -velocity.y) * 0.5;
-				float diffTopT = (top - (heightT.x + heightT.y) +  velocity.y) * 0.5;
-
+				float diffSufaceHeightL = sufaceHeight - (heightL.x + heightL.y) + speed * speed * (-dir.x);
+				float diffSufaceHeightR = sufaceHeight - (heightR.x + heightR.y) + speed * speed * ( dir.x);
+				float diffSufaceHeightB = sufaceHeight - (heightB.x + heightB.y) + speed * speed * (-dir.y);
+				float diffSufaceHeightT = sufaceHeight - (heightT.x + heightT.y) + speed * speed * ( dir.y);
 
 				//add by inflow
 				float waterHeightAfterInflow = waterHeight + inflowL.z + inflowR.x + inflowB.w + inflowT.y;//add by inflow
 
 				//outflow
-				float outflowL = clamp(diffTopL, 0, waterHeight) * 0.25;
-				float outflowR = clamp(diffTopR, 0, waterHeight) * 0.25; 
-				float outflowB = clamp(diffTopB, 0, waterHeight) * 0.25;
-				float outflowT = clamp(diffTopT, 0, waterHeight) * 0.25; 
+				float outflowL = clamp(diffSufaceHeightL * 0.5, 0, waterHeight) * 0.25;
+				float outflowR = clamp(diffSufaceHeightR * 0.5, 0, waterHeight) * 0.25; 
+				float outflowB = clamp(diffSufaceHeightB * 0.5, 0, waterHeight) * 0.25;
+				float outflowT = clamp(diffSufaceHeightT * 0.5, 0, waterHeight) * 0.25; 
 
 				//new water height
 				float waterHeightAfterOutflow = waterHeightAfterInflow - (outflowL + outflowR + outflowB + outflowT);
 				waterHeightAfterOutflow = max(waterHeightAfterOutflow, 0);
 				
 				//new velocity
-				float velocityDamp = 0.9;
+				float velocityDamp = 0.99;
 				//add velocity by inflow
-				//float2 addImply = float2( sqrt(inflowL.z)*(inflowL.z) - sqrt(inflowR.x)*(inflowR.x),
-				//						  sqrt(inflowB.w)*(inflowB.w) - sqrt(inflowT.y)*(inflowT.y));
-				//float2 newImply = addImply + velocity * waterHeight;
-				//velocity = newImply / (waterHeightAfterInflow + 0.0000001);
+				float2 addImply = float2( sqrt(inflowL.z)*(inflowL.z) - sqrt(inflowR.x)*(inflowR.x),
+										  sqrt(inflowB.w)*(inflowB.w) - sqrt(inflowT.y)*(inflowT.y));
+				float2 newImply = addImply + velocity * waterHeight;
+				velocity = newImply / (waterHeightAfterInflow + 0.0000001);
 				
 				
-				float2 addImply = float2( (inflowL.z) - (inflowR.x),
-										  (inflowB.w) - (inflowT.y)) * 0.8;
-				velocity += addImply;
+				//float2 addImply = float2( (inflowL.z) - (inflowR.x),
+				//						  (inflowB.w) - (inflowT.y)) * 0.8;
+				//velocity += addImply;
 				velocity *= velocityDamp;
 
 				//drop
@@ -137,7 +139,7 @@
 				
 				dest.height = float4(terrainHeight, waterHeightAfterOutflow, newCapacity, 0);
 				dest.outflow = float4(outflowL, outflowB, outflowR, outflowT);
-				dest.velocity = float4(velocity,addImply);
+				dest.velocity = float4(velocity,dir);
 				return dest;
 			}
 			

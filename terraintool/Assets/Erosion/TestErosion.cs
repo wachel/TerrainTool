@@ -57,7 +57,7 @@ public class TestErosion : MonoBehaviour
         GL.PushMatrix();
         GL.LoadPixelMatrix(0, 1, 1, 0);
 
-        mat.SetTexture("_InFlow", srcTextuers[1]);
+        mat.SetTexture("_Outflow", srcTextuers[1]);
         mat.SetTexture("_Velocity", srcTextuers[2]);
         Graphics.SetRenderTarget(targetBuffers, depthBuffer);
         Graphics.DrawTexture(new Rect(0, 0, 1, 1), srcTextuers[0], mat);

@@ -68,8 +68,11 @@ public class TestErosion : MonoBehaviour
 
     void Update()
     {
-        Draw(rt0, rb1);
-        Draw(rt1, rb0);
+
+            Draw(rt0, rb1);
+            Draw(rt1, rb0);
+
+        num++;
     }
 }
 

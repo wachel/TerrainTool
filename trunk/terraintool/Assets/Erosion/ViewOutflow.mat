@@ -82,7 +82,7 @@ Material:
       data:
         first:
           name: _Scale
-        second: 800
+        second: 1000
       data:
         first:
           name: _SrcBlend

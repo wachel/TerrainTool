@@ -102,7 +102,7 @@
 				//inflow
 				float totalInflow = inflowL.y + inflowR.x + inflowB.w + inflowT.z;
 				float totalOutflow = outflow.x + outflow.y + outflow.z + outflow.w;
-				waterHeight += (totalInflow - totalOutflow) * 0.1;
+				waterHeight += (totalInflow - totalOutflow) * 0.2;
 				waterHeight = max(waterHeight, 0);
 				
 

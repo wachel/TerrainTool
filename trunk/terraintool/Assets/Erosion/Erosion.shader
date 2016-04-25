@@ -68,8 +68,7 @@
 				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2( 1,0));
 				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
 				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
-
-				//inflow
+																							
 				float4 inflowL = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(-1,0));
 				float4 inflowR = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2( 1,0));
 				float4 inflowB = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0,-1));
@@ -80,41 +79,37 @@
 				float waterHeight = height.y;
 				float totalHeight = terrainHeight + waterHeight;
 
+				//add by inflow
+				//inflow
+				float totalInflow = inflowL.y + inflowR.x + inflowB.w + inflowT.z;
+				float totalOutflow = outflow.x + outflow.y + outflow.z + outflow.w;
+				float newWaterHeight = waterHeight + (totalInflow - totalOutflow);
+				newWaterHeight = max(newWaterHeight, 0);
+
 				//deltaTop
 				float diffHeightL = totalHeight - (heightL.x + heightL.y);
 				float diffHeightR = totalHeight - (heightR.x + heightR.y);
 				float diffHeightB = totalHeight - (heightB.x + heightB.y);
 				float diffHeightT = totalHeight - (heightT.x + heightT.y);
 
-				float flowdamp = 0.99;
+				float flowdamp = 0.9;
 
 				outflow *= flowdamp;
-				outflow.x = max(outflow.x + diffHeightL * 0.1, 0.000000001);
-				outflow.y = max(outflow.y + diffHeightR * 0.1, 0.000000001);
-				outflow.z = max(outflow.z + diffHeightB * 0.1, 0.000000001);
-				outflow.w = max(outflow.w + diffHeightT * 0.1, 0.000000001);
+				outflow.x = max(outflow.x + diffHeightL * 0.08, 0.000000001);
+				outflow.y = max(outflow.y + diffHeightR * 0.08, 0.000000001);
+				outflow.z = max(outflow.z + diffHeightB * 0.08, 0.000000001);
+				outflow.w = max(outflow.w + diffHeightT * 0.08, 0.000000001);
 
-				float outflowScale = waterHeight / (outflow.x + outflow.y + outflow.z + outflow.w);
+				float outflowScale = newWaterHeight / (outflow.x + outflow.y + outflow.z + outflow.w);
 				outflowScale = min(1, outflowScale);
 				outflow *= outflowScale;
 			
-				//add by inflow
-				//inflow
-				float totalInflow = inflowL.y + inflowR.x + inflowB.w + inflowT.z;
-				float totalOutflow = outflow.x + outflow.y + outflow.z + outflow.w;
-				waterHeight += (totalInflow - totalOutflow) * 0.2;
-				waterHeight = max(waterHeight, 0);
-				
-
 				PixelOutput dest;
-				dest.height = float4(terrainHeight, waterHeight, 0, 0);
+				dest.height = float4(terrainHeight, newWaterHeight, 0, 0);
 				dest.outflow = outflow;
 				dest.velocity = float4(velocity, inflowL.y + inflowR.x + inflowB.w + inflowT.z, 0);
 				return dest;
 			}
-			
-
-
 			ENDCG
 		}
 	}

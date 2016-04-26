@@ -67,13 +67,15 @@
 				float flowdamp = lerp(0.8, 1, x);
 				float flowSpeed = lerp(0.05, 0.15, x);
 
+				//流速
 				outflow *= flowdamp;
 				outflow = max(outflow + diffHeight * flowSpeed, (0.00001).xxxx);
 
+				//防止负数
 				float outflowScale = waterHeight / (outflow.x + outflow.y + outflow.z + outflow.w);
 				outflowScale = min(1, outflowScale);
 				outflow *= outflowScale;
-			
+
 				return outflow;
 			}
 			ENDCG
@@ -124,6 +126,15 @@
 				float waterHeight = height.y;
 				float totalHeight = terrainHeight + waterHeight;
 
+				//neighbour
+				float4 heightL = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(-1,0));
+				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2( 1,0));
+				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
+				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
+				float4 waterN = float4(heightL.y, heightR.y, heightB.y, heightT.y);
+				float4 suspendN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
+				
+
 				//inflow
 				float4 inflowL = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(-1,0));
 				float4 inflowR = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2( 1,0));
@@ -131,22 +142,34 @@
 				float4 inflowT = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0, 1));
 				float4 inflow = float4(inflowL.y, inflowR.x, inflowB.w, inflowT.z);
 
-				//
-				float4 diffFlow = inflow - outflow;
+				//悬浮物转移
+				float inSuspend = dot(suspendN * inflow/(waterN + (0.00001).xxxx),(1).xxxx);
+				float outSuspend = height.z * dot(outflow,(1).xxxx)/(waterHeight);
+				float suspend = height.z + inSuspend - outSuspend;
+				float newTerrainHeight = height.y 
 
+				//水面更新
+				float4 diffFlow = inflow - outflow;
 				waterHeight += dot(diffFlow,(1).xxxx);
 
+				//蒸发下雨
 				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
-
 				waterHeight -= _EvaporateSpeed * x;	//蒸发
 				waterHeight += _RainSpeed;			//下雨
 				waterHeight = max(waterHeight, 0);
 
-				//velocity
-				//float speed = length(diffFlow.x - diffFlow.y, diffFlow.z - diffFlow.w);
+				//悬浮物
+				float2 velocity = float2(outflow.y - outflow.x, outflow.w - outflow.z);//流速
+				float suspend = length(velocity) * 0.01;//悬浮物
+				float diffSuspend = suspend - height.z;
+				float newHeight = height.x - diffSuspend;
+				newHeight = max(0,newHeight);
+				suspend = height.x - 
 
+				diffSuspend = max(0,diffSuspend);
+				float newSuspend = height.z + 
 			
-				return float4(terrainHeight, waterHeight, 0, 0);
+				return float4(terrainHeight, waterHeight, suspend, 0);
 			}
 			ENDCG
 		}

@@ -28,7 +28,7 @@ public class TestErosion : MonoBehaviour
         RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBFloat);
         rt.generateMips = false;
         rt.useMipMap = false;
-        rt.filterMode = FilterMode.Point;
+        rt.filterMode = FilterMode.Bilinear;
         rt.wrapMode = TextureWrapMode.Clamp;
         return rt;
     }
@@ -72,7 +72,7 @@ public class TestErosion : MonoBehaviour
         Graphics.SetRenderTarget(null);
     }
 
-    void DrawRain(Texture height, Texture2D rainTexture, RenderTexture target,Vector2 pos,float size)
+    void DrawRain(Texture2D rainTexture, RenderTexture target,Vector2 pos,float size)
     {
         GL.PushMatrix();
         float w = 1 / size;
@@ -81,8 +81,6 @@ public class TestErosion : MonoBehaviour
         float y = -pos.y / size;
         GL.LoadPixelMatrix(x,x + w,y,y+w);
         Graphics.SetRenderTarget(target);
-        //mat.SetPass(2);
-        //mat.SetTexture("_RainTex", rainTexture);
         Graphics.DrawTexture(new Rect(0,0,1,1), rainTexture, rainMaterial);
         Graphics.SetRenderTarget(null);
         GL.PopMatrix();
@@ -97,11 +95,13 @@ public class TestErosion : MonoBehaviour
         Draw(height, outflow_b, height_b, 1);
 
         Draw(height_b, outflow_b, outflow, 0);
-        Draw(height_b, outflow, height, 1);
+        Draw(height_b, outflow, height_c, 1);
+
+        Draw(height_c, outflow, height, 2);
 
         float probabilityOfRain = rainPointSpeed * Time.deltaTime;//画雨点的概率
         while (Random.Range(0.0f, 1f) < probabilityOfRain) {
-            DrawRain(height_c, rainTexture, height, new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)), rainPointSize);
+            DrawRain(rainTexture, height, new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)), rainPointSize);
             probabilityOfRain -= 1;
         }
     }

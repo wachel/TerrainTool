@@ -63,9 +63,11 @@
 				float4 diffHeight = totalHeight.xxxx - totalHeightN;
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.8, 1, x);
-				float flowSpeed = lerp(0.05, 0.15, x);
+				float x = 1 - (1 / (waterHeight * 100 + 1));//水越深x越趋近于1
+				float flowdamp = lerp(0.96, 1, x);
+
+				float x2 = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
+				float flowSpeed = lerp(0.01, 0.15, x2);
 
 				//流速
 				outflow *= flowdamp;
@@ -117,6 +119,17 @@
 			uniform half4 _MainTex_TexelSize;
 			uniform half4 _Outflow_TexelSize;
 
+			float3 getNormal(float4 terrainN)
+			{
+				float3 left		= float3(-1,  0, terrainN.x);
+				float3 right	= float3( 1,  0, terrainN.y);
+				float3 bottom	= float3( 0, -1, terrainN.z);
+				float3 top		= float3( 0,  1, terrainN.w);
+				float3 normal0 = normalize(cross(top - bottom, left - top));
+				float3 normal1 = normalize(cross(bottom - top,right - bottom));
+				return (normal0 + normal1) * 0.5;
+			}
+
 			float4 frag (v2f i) :COLOR
 			{
 				//current
@@ -131,8 +144,9 @@
 				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2( 1,0));
 				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
 				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
+				float4 terrainN = float4(heightL.x, heightR.x, heightB.x, heightT.x);
 				float4 waterN = float4(heightL.y, heightR.y, heightB.y, heightT.y);
-				float4 suspendN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
+				float4 capacityN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
 				
 
 				//inflow
@@ -141,12 +155,6 @@
 				float4 inflowB = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0,-1));
 				float4 inflowT = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0, 1));
 				float4 inflow = float4(inflowL.y, inflowR.x, inflowB.w, inflowT.z);
-
-				//悬浮物转移
-				float inSuspend = dot(suspendN * inflow/(waterN + (0.00001).xxxx),(1).xxxx);
-				float outSuspend = height.z * dot(outflow,(1).xxxx)/(waterHeight);
-				float suspend = height.z + inSuspend - outSuspend;
-				float newTerrainHeight = height.y 
 
 				//水面更新
 				float4 diffFlow = inflow - outflow;
@@ -158,18 +166,68 @@
 				waterHeight += _RainSpeed;			//下雨
 				waterHeight = max(waterHeight, 0);
 
-				//悬浮物
+				//悬浮物携带能力
 				float2 velocity = float2(outflow.y - outflow.x, outflow.w - outflow.z);//流速
-				float suspend = length(velocity) * 0.01;//悬浮物
-				float diffSuspend = suspend - height.z;
-				float newHeight = height.x - diffSuspend;
-				newHeight = max(0,newHeight);
-				suspend = height.x - 
+				velocity /= (height.y + 0.00001);
+				float3 normal = getNormal(terrainN);
+				float abrupt = sqrt(1 - normal.z*normal.z);
+				float newCapacity = abrupt * abrupt + length(velocity) * 0.1;//携带悬浮物能力
 
-				diffSuspend = max(0,diffSuspend);
-				float newSuspend = height.z + 
+				//修改地形高度
+				terrainHeight += height.z - newCapacity;
+				terrainHeight = max(0, terrainHeight);
 			
-				return float4(terrainHeight, waterHeight, suspend, 0);
+				return float4(terrainHeight, waterHeight, newCapacity, abrupt);
+			}
+			ENDCG
+		}
+
+
+		//transform
+		Pass
+		{
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+
+			#include "UnityCG.cginc"
+
+			struct appdata
+			{
+				float4 vertex : POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			struct v2f
+			{
+				float2 uv : TEXCOORD0;
+				float4 vertex : SV_POSITION;
+			};
+
+			v2f vert (appdata v)
+			{
+				v2f o;
+				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				o.uv = v.uv;
+				return o;
+			}
+			
+			sampler2D _MainTex;
+			sampler2D _Outflow;
+			uniform half4 _MainTex_TexelSize;
+			uniform half4 _Outflow_TexelSize;
+
+
+			float4 frag (v2f i) :COLOR
+			{
+				//current
+			    float4 height = tex2D(_MainTex, i.uv);
+				float4 outflow = tex2D(_Outflow, i.uv);
+				
+				//悬浮物转移
+				float2 velocity = float2(outflow.y - outflow.x, outflow.w - outflow.z);//流速
+				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize * 2);
+				return float4(height.x, height.y, srcHeight.z, length(velocity));
 			}
 			ENDCG
 		}

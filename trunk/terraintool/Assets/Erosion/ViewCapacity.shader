@@ -3,6 +3,7 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
+		_Scale("Scale",float) = 1
 	}
 	SubShader
 	{
@@ -38,12 +39,12 @@
 			}
 			
 			sampler2D _MainTex;
-			float4 _Mask;
+			float _Scale;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				return float4(col.b, col.b, col.b, 1);
+				return float4(col.a, col.a, col.a, 0) * _Scale;
 			}
 			ENDCG
 		}

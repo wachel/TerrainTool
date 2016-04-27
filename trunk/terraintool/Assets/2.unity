@@ -112,15 +112,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b767b6cfa40fdd40af0774cd588445e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startTexture: {fileID: 2800000, guid: 08b76bbfcf1ba3c498ba40040388b6ff, type: 3}
+  startTexture: {fileID: 2800000, guid: bdf1d244d322d6a438e17d4d5a8180ea, type: 3}
   height: {fileID: 8400000, guid: 30ce3347c6938d34eabcde56e78d7f94, type: 2}
   outflow: {fileID: 8400000, guid: 8fee5d8cb1db7564386ec635ec0c0a7d, type: 2}
   rainTexture: {fileID: 2800000, guid: c9485639c5daa1246a8f89b61cae695c, type: 3}
   rainMaterial: {fileID: 2100000, guid: 141348f1580bd49469848fe7ebef6534, type: 2}
-  rainPointSpeed: 0
+  rainPointSpeed: 50
   rainPointSize: 0.1
-  evaporateSpeed: 0.001
-  globalRainSpeed: 0.0008
+  evaporateSpeed: 0.002
+  globalRainSpeed: 0
   mat: {fileID: 2100000, guid: 279d10d9bd1fb804ebfef66b83ce8a8a, type: 2}
 --- !u!4 &416686744
 Transform:

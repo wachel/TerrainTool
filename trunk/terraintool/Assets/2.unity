@@ -117,10 +117,10 @@ MonoBehaviour:
   outflow: {fileID: 8400000, guid: 8fee5d8cb1db7564386ec635ec0c0a7d, type: 2}
   rainTexture: {fileID: 2800000, guid: c9485639c5daa1246a8f89b61cae695c, type: 3}
   rainMaterial: {fileID: 2100000, guid: 141348f1580bd49469848fe7ebef6534, type: 2}
-  rainPointSpeed: 50
+  rainPointSpeed: 0
   rainPointSize: 0.1
-  evaporateSpeed: 0.002
-  globalRainSpeed: 0
+  evaporateSpeed: 0.001
+  globalRainSpeed: 0.0006
   mat: {fileID: 2100000, guid: 279d10d9bd1fb804ebfef66b83ce8a8a, type: 2}
 --- !u!4 &416686744
 Transform:

@@ -181,11 +181,11 @@
 				//float2 velocityAvg = float2(outflowAvg.y - outflowAvg.x,outflowAvg.w - outflowAvg.z);
 				//velocity = lerp(velocity,velocityAvg,0.1);
 
-				//velocity /= (height.y + 0.00001);
+				velocity /= (height.y + 0.00001);
 				float4 forwardHeight = tex2D(_MainTex,i.uv + normalize(velocity) * 0.5 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
 				//float newCapacity = abrupt * 0 + length(velocity) * 0.1;//携带悬浮物能力
-				float newCapacity = length(velocity) * 0.2;
+				float newCapacity = length(velocity) * 0.02;
 				newCapacity = max(0, newCapacity);
 
 				//修改地形高度
@@ -263,7 +263,7 @@
 				float4 inCapacity = capacityN * inflow / (waterN + 0.00001);
 				float4 outCapacity = height.z * outflow / (height.y + 0.00001);
 
-				float newCapacity = height.z + dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx);
+				float newCapacity = height.z + (dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx)) * 0.5;
 				newCapacity = max(0, newCapacity);
 				return float4(height.x, height.y, newCapacity, height.w);
 

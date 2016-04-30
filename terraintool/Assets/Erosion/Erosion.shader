@@ -69,11 +69,11 @@
 				float4 diffHeight = totalHeight.xxxx - totalHeightN;
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 100 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.90, 1, x);
+				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
+				float flowdamp = lerp(0.80, 1, x);
 
 				float x2 = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
-				float flowSpeed = lerp(0.05, 0.15, x2);
+				float flowSpeed = lerp(0.05, 0.2, x2);
 
 				//流速
 				outflow *= flowdamp;
@@ -176,16 +176,16 @@
 				//悬浮物携带能力
 				float2 velocityOutflow = float2(outflow.y - outflow.x,outflow.w - outflow.z);
 				float2 velocityInflow = float2(inflow.x - inflow.y,inflow.z - inflow.w);
-				float2 velocity = velocityOutflow;//流速
+				float2 velocity = velocityInflow;//流速
 				//float4 outflowAvg = (outflowL + outflowR + outflowB + outflowT)/4;
 				//float2 velocityAvg = float2(outflowAvg.y - outflowAvg.x,outflowAvg.w - outflowAvg.z);
 				//velocity = lerp(velocity,velocityAvg,0.1);
 
-				velocity /= (height.y + 0.00001);
+				//velocity /= (height.y + 0.00001);
 				float4 forwardHeight = tex2D(_MainTex,i.uv + normalize(velocity) * 0.5 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
 				//float newCapacity = abrupt * 0 + length(velocity) * 0.1;//携带悬浮物能力
-				float newCapacity = length(velocity) * 0.02;
+				float newCapacity = length(velocity) * 0.1;
 				newCapacity = max(0, newCapacity);
 
 				//修改地形高度
@@ -260,12 +260,12 @@
 				//return float4((outflow * height.z / height.y));
 
 
-				float4 inCapacity = capacityN * inflow / (waterN + 0.00001);
-				float4 outCapacity = height.z * outflow / (height.y + 0.00001);
-
-				float newCapacity = height.z + (dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx)) * 0.5;
+				float4 inCapacity =  inflow  * capacityN / (waterN + 0.00001);
+				float4 outCapacity = outflow * height.z / (height.y + 0.00001);
+				float diff = dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx);
+				float newCapacity = height.z + diff;
 				newCapacity = max(0, newCapacity);
-				return float4(height.x, height.y, newCapacity, height.w);
+				return float4(height.x, height.y, newCapacity, diff);
 
 			}
 			ENDCG

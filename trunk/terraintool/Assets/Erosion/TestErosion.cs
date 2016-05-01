@@ -7,6 +7,8 @@ public class TestErosion : MonoBehaviour
 
     public RenderTexture height;
     public RenderTexture outflow;
+    public RenderTexture height_b;
+    public RenderTexture outflow_b;
 
     public Texture2D rainTexture;
     public Material rainMaterial;
@@ -16,9 +18,6 @@ public class TestErosion : MonoBehaviour
     public float evaporateSpeed = 0.001f;
     public float globalRainSpeed = 0.0005f;
 
-    private RenderTexture height_b;
-    private RenderTexture height_c;
-    private RenderTexture outflow_b;
 
     public Material mat;
     int num = 0;
@@ -28,16 +27,16 @@ public class TestErosion : MonoBehaviour
         RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBFloat);
         rt.generateMips = false;
         rt.useMipMap = false;
-        rt.filterMode = FilterMode.Bilinear;
+        rt.filterMode = FilterMode.Point;
         rt.wrapMode = TextureWrapMode.Clamp;
         return rt;
     }
 
     void Start()
     {
-        height_b = createTexture(height.width, height.height);
-        height_c = createTexture(height.width, height.height);
-        outflow_b = createTexture(height.width, height.height);
+        //height_b = createTexture(height.width, height.height);
+        //height_c = createTexture(height.width, height.height);
+        //outflow_b = createTexture(height.width, height.height);
         
 
         Clear(height);
@@ -95,9 +94,9 @@ public class TestErosion : MonoBehaviour
         Draw(height, outflow_b, height_b, 1);
 
         Draw(height_b, outflow_b, outflow, 0);
-        Draw(height_b, outflow, height_c, 1);
+        Draw(height_b, outflow, height, 1);
 
-        Draw(height_c, outflow, height, 2);
+        //Draw(height_c, outflow, height, 2);
 
         float probabilityOfRain = rainPointSpeed * Time.deltaTime;//画雨点的概率
         while (Random.Range(0.0f, 1f) < probabilityOfRain) {

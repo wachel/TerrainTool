@@ -45,7 +45,6 @@
 
 			float4 frag (v2f i):COLOR
 			{
-
 				//current
 			    float4 height = tex2D(_MainTex, i.uv);
 				float4 outflow = tex2D(_Outflow, i.uv);
@@ -58,7 +57,7 @@
 				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
 				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
 				float4 totalHeightN = float4(heightL.x + heightL.y, heightR.x + heightR.y, heightB.x + heightB.y, heightT.x + heightT.y);
-				
+
 				//outflowN
 				float4 outflowL = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(-1,0));
 				float4 outflowR = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2( 1,0));
@@ -69,7 +68,7 @@
 				float4 diffHeight = totalHeight.xxxx - totalHeightN;
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
+				float x = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
 				float flowdamp = lerp(0.80, 1, x);
 
 				float x2 = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
@@ -78,7 +77,7 @@
 				//流速
 				outflow *= flowdamp;
 				outflow += diffHeight * flowSpeed;
-				outflow = max(outflow, (0.00001).xxxx);
+				outflow = max(outflow, (0.0000001).xxxx);
 
 				//防止负数
 				float outflowScale = waterHeight / (outflow.x + outflow.y + outflow.z + outflow.w);
@@ -155,13 +154,30 @@
 				float4 waterN = float4(heightL.y, heightR.y, heightB.y, heightT.y);
 				float4 capacityN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
 				
-
 				//inflow
 				float4 outflowL = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(-1,0));
 				float4 outflowR = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2( 1,0));
 				float4 outflowB = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0,-1));
 				float4 outflowT = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0, 1));
 				float4 inflow = float4(outflowL.y, outflowR.x, outflowB.w, outflowT.z);
+
+				//悬浮物数量转移
+				float4 suspendedSolidIn = inflow  * capacityN / (waterN + 0.0000001);
+				float4 suspendedSolidOut = outflow * height.z / (height.y + 0.0000001);
+				float suspendedSolidChange = dot(suspendedSolidIn, (1).xxxx) - dot(suspendedSolidOut, (1).xxxx);
+				float suspendedSolid = height.z + suspendedSolidChange;//当前悬浮物数量
+
+				////悬浮物携带能力
+				float2 fluxOutflow = float2(outflow.y - outflow.x, outflow.w - outflow.z);
+				float2 fluxInflow = float2(inflow.x - inflow.y, inflow.z - inflow.w);
+				float2 flux = (fluxOutflow + fluxInflow) * 0.5;//通量
+				//float2 velocity = flux / (height.y + 0.00001);
+				//float newCapacity = length(velocity) * 0.8;
+
+				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 0.5 * _MainTex_TexelSize.xy);
+				float abrupt = height.x - forwardHeight.x;
+				float newCapacity = abrupt * abrupt * 0.3;
+				newCapacity = max(0, newCapacity);
 
 				//水面更新
 				float4 diffFlow = inflow - outflow;
@@ -173,102 +189,87 @@
 				waterHeight += _RainSpeed;			//下雨
 				waterHeight = max(waterHeight, 0);
 
-				//悬浮物携带能力
-				float2 velocityOutflow = float2(outflow.y - outflow.x,outflow.w - outflow.z);
-				float2 velocityInflow = float2(inflow.x - inflow.y,inflow.z - inflow.w);
-				float2 velocity = velocityInflow;//流速
-				//float4 outflowAvg = (outflowL + outflowR + outflowB + outflowT)/4;
-				//float2 velocityAvg = float2(outflowAvg.y - outflowAvg.x,outflowAvg.w - outflowAvg.z);
-				//velocity = lerp(velocity,velocityAvg,0.1);
-
-				//velocity /= (height.y + 0.00001);
-				float4 forwardHeight = tex2D(_MainTex,i.uv + normalize(velocity) * 0.5 * _MainTex_TexelSize.xy);
-				float abrupt = height.x - forwardHeight.x;
-				//float newCapacity = abrupt * 0 + length(velocity) * 0.1;//携带悬浮物能力
-				float newCapacity = length(velocity) * 0.1;
-				newCapacity = max(0, newCapacity);
-
 				//修改地形高度
-				terrainHeight += height.z - newCapacity;
+				terrainHeight = height.x + suspendedSolid - newCapacity;
 				terrainHeight = max(0, terrainHeight);
-				newCapacity = height.z + height.x - terrainHeight;
+				newCapacity = suspendedSolid + height.x - terrainHeight;
 			
-				return float4(terrainHeight, waterHeight, newCapacity, newCapacity);
+				return float4(terrainHeight, waterHeight, newCapacity, -outflow.y + outflow.x);
 			}
 			ENDCG
 		}
 
 
-		//transform
-		Pass
-		{
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-
-			#include "UnityCG.cginc"
-
-			struct appdata
-			{
-				float4 vertex : POSITION;
-				float2 uv : TEXCOORD0;
-			};
-
-			struct v2f
-			{
-				float2 uv : TEXCOORD0;
-				float4 vertex : SV_POSITION;
-			};
-
-			v2f vert (appdata v)
-			{
-				v2f o;
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-				o.uv = v.uv;
-				return o;
-			}
-			
-			sampler2D _MainTex;
-			sampler2D _Outflow;
-			uniform half4 _MainTex_TexelSize;
-			uniform half4 _Outflow_TexelSize;
-
-
-			float4 frag (v2f i) :COLOR
-			{
-				//current
-			    float4 height = tex2D(_MainTex, i.uv);
-				float4 outflow = tex2D(_Outflow, i.uv);
-				
-				float4 outflowL = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(-1, 0));
-				float4 outflowR = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(1, 0));
-				float4 outflowB = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(0, -1));
-				float4 outflowT = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(0, 1));
-				float4 inflow = float4(outflowL.y, outflowR.x, outflowB.w, outflowT.z);
-
-				float4 heightL = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(-1, 0));
-				float4 heightR = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(1, 0));
-				float4 heightB = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(0, -1));
-				float4 heightT = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(0, 1));
-				float4 waterN = float4(heightL.y, heightR.y, heightB.y, heightT.y);
-				float4 capacityN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
-
-				//悬浮物转移
-				//float2 velocity = float2(outflow.y - outflow.x, outflow.w - outflow.z);//流速
-				//float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 0.5);
-				//return float4(height.x, height.y, srcHeight.z, height.w);
-				//return float4((outflow * height.z / height.y));
-
-
-				float4 inCapacity =  inflow  * capacityN / (waterN + 0.00001);
-				float4 outCapacity = outflow * height.z / (height.y + 0.00001);
-				float diff = dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx);
-				float newCapacity = height.z + diff;
-				newCapacity = max(0, newCapacity);
-				return float4(height.x, height.y, newCapacity, diff);
-
-			}
-			ENDCG
-		}
+		////transform
+		//Pass
+		//{
+		//	CGPROGRAM
+		//	#pragma vertex vert
+		//	#pragma fragment frag
+		//
+		//	#include "UnityCG.cginc"
+		//
+		//	struct appdata
+		//	{
+		//		float4 vertex : POSITION;
+		//		float2 uv : TEXCOORD0;
+		//	};
+		//
+		//	struct v2f
+		//	{
+		//		float2 uv : TEXCOORD0;
+		//		float4 vertex : SV_POSITION;
+		//	};
+		//
+		//	v2f vert (appdata v)
+		//	{
+		//		v2f o;
+		//		o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+		//		o.uv = v.uv;
+		//		return o;
+		//	}
+		//	
+		//	sampler2D _MainTex;
+		//	sampler2D _Outflow;
+		//	uniform half4 _MainTex_TexelSize;
+		//	uniform half4 _Outflow_TexelSize;
+		//
+		//
+		//	float4 frag (v2f i) :COLOR
+		//	{
+		//		//current
+		//	    float4 height = tex2D(_MainTex, i.uv);
+		//		float4 outflow = tex2D(_Outflow, i.uv);
+		//		
+		//		float4 outflowL = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(-1, 0));
+		//		float4 outflowR = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(1, 0));
+		//		float4 outflowB = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(0, -1));
+		//		float4 outflowT = tex2D(_Outflow, i.uv + _Outflow_TexelSize.xy * half2(0, 1));
+		//		float4 inflow = float4(outflowL.y, outflowR.x, outflowB.w, outflowT.z);
+		//
+		//		float4 heightL = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(-1, 0));
+		//		float4 heightR = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(1, 0));
+		//		float4 heightB = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(0, -1));
+		//		float4 heightT = tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * half2(0, 1));
+		//		float4 waterN = float4(heightL.y, heightR.y, heightB.y, heightT.y);
+		//		float4 capacityN = float4(heightL.z, heightR.z, heightB.z, heightT.z);
+		//
+		//		//悬浮物转移
+		//		//float2 velocity = float2(outflow.y - outflow.x, outflow.w - outflow.z);//流速
+		//		//float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 0.5);
+		//		//return float4(height.x, height.y, srcHeight.z, height.w);
+		//		//return float4((outflow * height.z / height.y));
+		//
+		//
+		//		float4 inCapacity =  inflow  * capacityN / (waterN + 0.00001);
+		//		float4 outCapacity = outflow * height.z / (height.y + 0.00001);
+		//		float diff = dot(inCapacity, (1).xxxx) - dot(outCapacity, (1).xxxx);
+		//		float newCapacity = height.z + diff;
+		//		newCapacity = max(0, newCapacity);
+		//		return float4(height.x, height.y, height.z, height.w);
+		//
+		//	}
+		//	ENDCG
+		//}
 	}
 }

@@ -69,10 +69,10 @@
 
 				//水深的地方流速快，衰减低
 				float x = 1 - (1 / (waterHeight * 100 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.90, 1, x);
+				float flowdamp = lerp(0.85, 1, x);
 
 				float x2 = 1 - (1 / (waterHeight * 30 + 1));//水越深x越趋近于1
-				float flowSpeed = lerp(0.10, 0.2, x2);
+				float flowSpeed = lerp(0.05, 0.2, x2);
 
 				//流速
 				outflow *= flowdamp;
@@ -161,22 +161,25 @@
 				float4 outflowT = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0, 1));
 				float4 inflow = float4(outflowL.y, outflowR.x, outflowB.w, outflowT.z);
 
-				//悬浮物数量转移
-				float4 suspendedSolidIn = inflow  * capacityN / (waterN + 0.0000001);
-				float4 suspendedSolidOut = outflow * height.z / (height.y + 0.0000001);
-				float suspendedSolidChange = dot(suspendedSolidIn, (1).xxxx) - dot(suspendedSolidOut, (1).xxxx);
-				float suspendedSolid = height.z + suspendedSolidChange;//当前悬浮物数量
+				////悬浮物数量转移
+				//float4 suspendedSolidIn = inflow  * capacityN / (waterN + 0.0000001);
+				//float4 suspendedSolidOut = outflow * height.z / (height.y + 0.0000001);
+				//float suspendedSolidChange = dot(suspendedSolidIn, (1).xxxx) - dot(suspendedSolidOut, (1).xxxx);
+				//float suspendedSolid = height.z + suspendedSolidChange;//当前悬浮物数量
 
 				////悬浮物携带能力
 				float2 fluxOutflow = float2(outflow.y - outflow.x, outflow.w - outflow.z);
 				float2 fluxInflow = float2(inflow.x - inflow.y, inflow.z - inflow.w);
-				float2 flux = (fluxOutflow + fluxInflow) * 0.5;//通量
+				float2 flux = (fluxInflow) ;//通量
 				float2 velocity = flux / (height.y + 0.00001);
 				//float newCapacity = length(velocity) * 0.8;
 
+				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 5);
+				float suspendedSolid = srcHeight.z;
+
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt + 0.1) * length(flux) * 1;
+				float newCapacity = (abrupt * length(flux)) * 0.8;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新
@@ -185,16 +188,16 @@
 
 				//蒸发下雨
 				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
-				waterHeight -= _EvaporateSpeed * x;	//蒸发
+				waterHeight -= _EvaporateSpeed * x * 3;	//蒸发
 				waterHeight += _RainSpeed;			//下雨
 				waterHeight = max(waterHeight, 0);
 
 				//修改地形高度
-				terrainHeight = height.x + suspendedSolid - newCapacity;
-				terrainHeight = max(0, terrainHeight);
-				newCapacity = suspendedSolid + height.x - terrainHeight;
+				float newTerrainHeight = height.x + suspendedSolid - newCapacity;
+				newTerrainHeight = max(0, newTerrainHeight);
+				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
 			
-				return float4(terrainHeight, waterHeight, 0, abrupt);
+				return float4(newTerrainHeight, waterHeight, newCapacity, abrupt);
 			}
 			ENDCG
 		}

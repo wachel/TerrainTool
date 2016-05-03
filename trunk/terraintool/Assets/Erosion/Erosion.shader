@@ -179,7 +179,7 @@
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt * length(flux)) * 0.8;
+				float newCapacity = (abrupt * length(flux)) * 1;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新
@@ -197,7 +197,7 @@
 				newTerrainHeight = max(0, newTerrainHeight);
 				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
 			
-				return float4(newTerrainHeight, waterHeight, newCapacity, abrupt);
+				return float4(newTerrainHeight, waterHeight, 0, abrupt);
 			}
 			ENDCG
 		}

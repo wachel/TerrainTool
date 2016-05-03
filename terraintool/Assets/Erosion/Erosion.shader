@@ -68,11 +68,11 @@
 				float4 diffHeight = totalHeight.xxxx - totalHeightN;
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 100 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.85, 1, x);
+				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
+				float flowdamp = lerp(0.90, 1, x);
 
 				float x2 = 1 - (1 / (waterHeight * 30 + 1));//水越深x越趋近于1
-				float flowSpeed = lerp(0.05, 0.2, x2);
+				float flowSpeed = lerp(0.1, 0.2, x2);
 
 				//流速
 				outflow *= flowdamp;
@@ -174,7 +174,7 @@
 				float2 velocity = flux / (height.y + 0.00001);
 				//float newCapacity = length(velocity) * 0.8;
 
-				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 5);
+				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 2);
 				float suspendedSolid = srcHeight.z;
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
@@ -197,7 +197,7 @@
 				newTerrainHeight = max(0, newTerrainHeight);
 				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
 			
-				return float4(newTerrainHeight, waterHeight, 0, abrupt);
+				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, abrupt);
 			}
 			ENDCG
 		}

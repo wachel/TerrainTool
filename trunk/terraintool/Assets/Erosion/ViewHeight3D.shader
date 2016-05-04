@@ -68,7 +68,7 @@
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
 				fixed3 worldNormal = UnityObjectToWorldNormal(normal);
-				half nl = max(0, dot(worldNormal, -_WorldSpaceLightPos0.xyz));
+				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
 				o.diff = fixed4(nl * _LightColor0.rgb, color.g);
 				UNITY_TRANSFER_FOG(o,o.vertex);
 				return o;

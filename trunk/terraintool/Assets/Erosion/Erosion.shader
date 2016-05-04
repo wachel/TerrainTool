@@ -68,13 +68,13 @@
 				float4 diffHeight = (totalHeight.xxxx - totalHeightN);
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 30 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.85, 1, x);
+				float x = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
+				float flowdamp = lerp(0.80, 0.98, x);
 				//float flowdamp = 0.95;
 
 				//float x2 = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
 				//float flowSpeed = lerp(0.01, 0.2, x2);
-				float flowSpeed = 0.05;
+				float flowSpeed = 0.2;
 
 				float4 distance = sqrt(diffHeight * diffHeight / _Outflow_TexelSize.x + 1 * 1);
 
@@ -183,7 +183,7 @@
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt * abs(abrupt)) * (length(flux) + 0.003) * 100;
+				float newCapacity = (abrupt * abs(abrupt)) * (length(flux) + 0.003) * 1000;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新

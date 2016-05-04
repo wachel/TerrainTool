@@ -42,4 +42,4 @@ Material:
       data:
         first:
           name: _Size
-        second: {r: 1, g: 0.2, b: 1, a: 1}
+        second: {r: 1, g: 0.5, b: 1, a: 1}

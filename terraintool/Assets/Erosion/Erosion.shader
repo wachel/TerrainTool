@@ -65,18 +65,22 @@
 				float4 outflowT = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(0, 1));
 
 				//计算水面高度差
-				float4 diffHeight = totalHeight.xxxx - totalHeightN;
+				float4 diffHeight = (totalHeight.xxxx - totalHeightN);
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 10 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.90, 1, x);
+				float x = 1 - (1 / (waterHeight * 30 + 1));//水越深x越趋近于1
+				float flowdamp = lerp(0.85, 1, x);
+				//float flowdamp = 0.95;
 
-				float x2 = 1 - (1 / (waterHeight * 30 + 1));//水越深x越趋近于1
-				float flowSpeed = lerp(0.1, 0.2, x2);
+				//float x2 = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
+				//float flowSpeed = lerp(0.01, 0.2, x2);
+				float flowSpeed = 0.05;
+
+				float4 distance = sqrt(diffHeight * diffHeight / _Outflow_TexelSize.x + 1 * 1);
 
 				//流速
 				outflow *= flowdamp;
-				outflow += diffHeight * flowSpeed;
+				outflow += diffHeight * flowSpeed / distance;
 				outflow = max(outflow, (0.0000001).xxxx);
 
 				//防止负数
@@ -170,7 +174,7 @@
 				////悬浮物携带能力
 				float2 fluxOutflow = float2(outflow.y - outflow.x, outflow.w - outflow.z);
 				float2 fluxInflow = float2(inflow.x - inflow.y, inflow.z - inflow.w);
-				float2 flux = (fluxInflow) ;//通量
+				float2 flux = (fluxInflow + fluxOutflow) * 0.5 ;//通量
 				float2 velocity = flux / (height.y + 0.00001);
 				//float newCapacity = length(velocity) * 0.8;
 
@@ -179,7 +183,7 @@
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt * length(flux)) * 1;
+				float newCapacity = (abrupt * abs(abrupt)) * (length(flux) + 0.003) * 100;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新
@@ -197,7 +201,7 @@
 				newTerrainHeight = max(0, newTerrainHeight);
 				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
 			
-				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, abrupt);
+				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, newSuspendedSolid);
 			}
 			ENDCG
 		}

@@ -49,15 +49,16 @@
 			v2f vert (appdata v)
 			{
 				v.uv *= _Scale;
+				float2 texelSize = _MainTex_TexelSize.xy * _Scale;
 				float4 color = tex2Dlod(_Height, float4(v.uv, 0, 0));
 
 				float y = color.r;
-				float yRight = tex2Dlod(_Height, float4(v.uv + float2(1, 0) * _MainTex_TexelSize.xy , 0, 0)).r;
-				float yDown = tex2Dlod(_Height, float4(v.uv + float2(0, -1) * _MainTex_TexelSize.xy , 0, 0)).r;
+				float yRight = tex2Dlod(_Height, float4(v.uv + float2(1, 0) * texelSize, 0, 0)).r;
+				float yDown = tex2Dlod(_Height, float4(v.uv + float2(0, -1) * texelSize, 0, 0)).r;
 
 				float4 pos = (v.vertex + float4(0, y, 0, 0)) * _Size;
 				float3 posRight = (v.vertex + float3(_MainTex_TexelSize.x, yRight, 0)) * _Size.xyz;
-				float3 posDown = (v.vertex + float3(0 , yRight, -_MainTex_TexelSize.x)) * _Size.xyz;
+				float3 posDown = (v.vertex + float3(0 , yRight, -_MainTex_TexelSize.y)) * _Size.xyz;
 
 				float3 normal = cross(posRight - pos.xyz,posDown - pos.xyz);
 				normal = normalize(normal);
@@ -67,8 +68,8 @@
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
 				fixed3 worldNormal = UnityObjectToWorldNormal(normal);
-				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
-				o.diff = fixed4(nl * _LightColor0.rgb,color.g);
+				half nl = max(0, dot(worldNormal, -_WorldSpaceLightPos0.xyz));
+				o.diff = fixed4(nl * _LightColor0.rgb, color.g);
 				UNITY_TRANSFER_FOG(o,o.vertex);
 				return o;
 			}

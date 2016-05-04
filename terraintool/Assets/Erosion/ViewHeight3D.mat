@@ -33,7 +33,7 @@ Material:
       data:
         first:
           name: _Scale
-        second: 0.25
+        second: 0.4
       data:
         first:
           name: _WaterDensity

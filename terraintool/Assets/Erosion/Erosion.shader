@@ -176,14 +176,14 @@
 				float2 fluxInflow = float2(inflow.x - inflow.y, inflow.z - inflow.w);
 				float2 flux = (fluxInflow + fluxOutflow) * 0.5 ;//通量
 				float2 velocity = flux / (height.y + 0.00001);
-				//float newCapacity = length(velocity) * 0.8;
 
+				//float4 srcHeight = tex2D(_MainTex, i.uv - flux * _MainTex_TexelSize.xy * 1000);
 				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 2);
 				float suspendedSolid = srcHeight.z;
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt * abs(abrupt)) * (length(flux) + 0.003) * 1000;
+				float newCapacity = (abrupt) * (length(flux) + 0.003) * 20;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新

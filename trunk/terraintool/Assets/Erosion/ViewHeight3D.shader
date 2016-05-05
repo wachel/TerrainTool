@@ -6,6 +6,8 @@
 		_Height("Height", 2D) = "black" {}
 		_Size("Size", Vector) = (1,0.2,1,0)
 		_Scale("Scale",float) = 1
+	    _StartX("StartX",float) = 0
+		_StartY("StartY",float) = 0
 		_WaterDensity("WaterDensity",float) = 5
 	}
 	SubShader
@@ -43,12 +45,14 @@
 			uniform half4 _MainTex_TexelSize;
 			sampler2D _Height;
 			float _Scale;
+			float _StartX;
+			float _StartY;
 			float4 _Size;
 			float _WaterDensity;
 			
 			v2f vert (appdata v)
 			{
-				v.uv *= _Scale;
+				v.uv = v.uv * _Scale + float2(_StartX,_StartY);
 				float2 texelSize = _MainTex_TexelSize.xy * _Scale;
 				float4 color = tex2Dlod(_Height, float4(v.uv, 0, 0));
 
@@ -67,7 +71,7 @@
 				o.vertex = mul(UNITY_MATRIX_MVP, pos);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
-				fixed3 worldNormal = UnityObjectToWorldNormal(normal);
+				fixed3 worldNormal = -UnityObjectToWorldNormal(normal);
 				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
 				o.diff = fixed4(nl * _LightColor0.rgb, color.g);
 				UNITY_TRANSFER_FOG(o,o.vertex);
@@ -78,7 +82,7 @@
 			{
 				// sample the texture
 				fixed4 col = tex2D(_MainTex, i.uv) * float4(i.diff.xyz,1);
-				col = lerp(col,fixed4(0,0,1,1),i.diff.a * _WaterDensity);
+				col = lerp(col,fixed4(0,0,1,1),min(0.5,i.diff.a * _WaterDensity));
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;

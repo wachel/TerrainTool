@@ -3,6 +3,7 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
+		_Height("Height",float) = 1
 	}
 	SubShader
 	{
@@ -39,11 +40,12 @@
 			}
 			
 			sampler2D _MainTex;
+			float _Height;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				return float4(0,col.g,0,0);
+				return float4(0,col.g * _Height,0,0);
 			}
 			ENDCG
 		}

@@ -14,6 +14,7 @@ public class TestErosion : MonoBehaviour
     public Material rainMaterial;
     public float rainPointSpeed;
     public float rainPointSize = 0.1f;
+    public float rainHeight = 1.0f;
 
     public float evaporateSpeed = 0.001f;
     public float globalRainSpeed = 0.0005f;
@@ -89,6 +90,7 @@ public class TestErosion : MonoBehaviour
     {
         mat.SetFloat("_EvaporateSpeed", evaporateSpeed);
         mat.SetFloat("_RainSpeed", globalRainSpeed);
+        rainMaterial.SetFloat("_Height", rainHeight);
 
         Draw(height, outflow, outflow_b, 0);
         Draw(height, outflow_b, height_b, 1);

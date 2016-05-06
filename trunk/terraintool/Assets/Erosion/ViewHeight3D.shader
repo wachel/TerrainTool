@@ -60,18 +60,18 @@
 				float yRight = tex2Dlod(_Height, float4(v.uv + float2(1, 0) * texelSize, 0, 0)).r;
 				float yDown = tex2Dlod(_Height, float4(v.uv + float2(0, -1) * texelSize, 0, 0)).r;
 
-				float4 pos = (v.vertex + float4(0, y, 0, 0)) * _Size;
+				float3 pos = (v.vertex + float3(0, y, 0)) * _Size.xyz;
 				float3 posRight = (v.vertex + float3(_MainTex_TexelSize.x, yRight, 0)) * _Size.xyz;
 				float3 posDown = (v.vertex + float3(0 , yRight, -_MainTex_TexelSize.y)) * _Size.xyz;
 
-				float3 normal = cross(posRight - pos.xyz,posDown - pos.xyz);
+				float3 normal = cross(posRight - pos,posDown - pos);
 				normal = normalize(normal);
 
 				v2f o;
-				o.vertex = mul(UNITY_MATRIX_MVP, pos);
+				o.vertex = mul(UNITY_MATRIX_MVP, float4(pos,1));
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
-				fixed3 worldNormal = -UnityObjectToWorldNormal(normal);
+				fixed3 worldNormal = UnityObjectToWorldNormal(normal);
 				half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
 				o.diff = fixed4(nl * _LightColor0.rgb, color.g);
 				UNITY_TRANSFER_FOG(o,o.vertex);

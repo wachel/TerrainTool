@@ -33,11 +33,19 @@ Material:
       data:
         first:
           name: _Scale
-        second: 0.4
+        second: 0.25
       data:
         first:
           name: _WaterDensity
-        second: 4.3
+        second: 50
+      data:
+        first:
+          name: _StartX
+        second: 0
+      data:
+        first:
+          name: _StartY
+        second: 0
     m_Colors:
       data:
         first:

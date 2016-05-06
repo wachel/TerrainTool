@@ -131,6 +131,10 @@ Material:
         first:
           name: _InvFade
         second: 1
+      data:
+        first:
+          name: _Height
+        second: 0.003
     m_Colors:
       data:
         first:

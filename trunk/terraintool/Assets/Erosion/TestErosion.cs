@@ -91,19 +91,20 @@ public class TestErosion : MonoBehaviour
         mat.SetFloat("_EvaporateSpeed", evaporateSpeed);
         mat.SetFloat("_RainSpeed", globalRainSpeed);
         rainMaterial.SetFloat("_Height", rainHeight);
+        for (int i = 0; i < 1; i++) {
+            Draw(height, outflow, outflow_b, 0);
+            Draw(height, outflow_b, height_b, 1);
 
-        Draw(height, outflow, outflow_b, 0);
-        Draw(height, outflow_b, height_b, 1);
+            Draw(height_b, outflow_b, outflow, 0);
+            Draw(height_b, outflow, height, 1);
 
-        Draw(height_b, outflow_b, outflow, 0);
-        Draw(height_b, outflow, height, 1);
+            //Draw(height_c, outflow, height, 2);
 
-        //Draw(height_c, outflow, height, 2);
-
-        float probabilityOfRain = rainPointSpeed * Time.deltaTime;//画雨点的概率
-        while (Random.Range(0.0f, 1f) < probabilityOfRain) {
-            DrawRain(rainTexture, height, new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)), rainPointSize);
-            probabilityOfRain -= 1;
+            float probabilityOfRain = rainPointSpeed * Time.deltaTime;//画雨点的概率
+            while (Random.Range(0.0f, 1f) < probabilityOfRain) {
+                DrawRain(rainTexture, height, new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)), rainPointSize);
+                probabilityOfRain -= 1;
+            }
         }
     }
 }

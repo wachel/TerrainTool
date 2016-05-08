@@ -56,7 +56,12 @@
 				float4 heightR = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2( 1,0));
 				float4 heightB = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0,-1));
 				float4 heightT = tex2D(_MainTex,i.uv + _MainTex_TexelSize.xy * half2(0, 1));
-				float4 totalHeightN = float4(heightL.x + heightL.y, heightR.x + heightR.y, heightB.x + heightB.y, heightT.x + heightT.y);
+				float4 totalHeightN = float4(
+					heightL.x + heightL.y, 
+					heightR.x + heightR.y, 
+					heightB.x + heightB.y, 
+					heightT.x + heightT.y
+				);
 
 				//outflowN
 				float4 outflowL = tex2D(_Outflow,i.uv + _Outflow_TexelSize.xy * half2(-1,0));
@@ -68,9 +73,9 @@
 				float4 diffHeight = (totalHeight.xxxx - totalHeightN);
 
 				//水深的地方流速快，衰减低
-				float x = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
-				float flowdamp = lerp(0.80, 0.98, x);
-				//float flowdamp = 0.95;
+				//float x = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
+				//float flowdamp = lerp(0.80, 0.98, x);
+				float flowdamp = 0.95;
 
 				//float x2 = 1 - (1 / (waterHeight * 50 + 1));//水越深x越趋近于1
 				//float flowSpeed = lerp(0.01, 0.2, x2);
@@ -161,12 +166,12 @@
 				float2 velocity = flux / (height.y + 0.00001);
 
 				//float4 srcHeight = tex2D(_MainTex, i.uv - flux * _MainTex_TexelSize.xy * 1000);
-				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 2);
+				float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 1);
 				float suspendedSolid = srcHeight.z;
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
-				float abrupt = height.x - forwardHeight.x;
-				float newCapacity = (abrupt) * (length(flux) + 0.003) * 20;
+				float abrupt = (height.x - forwardHeight.x) * (1+height.w*10);
+				float newCapacity = (abrupt) * (length(flux) + 0.001) * 30;
 				newCapacity = max(0, newCapacity);
 
 				//水面更新
@@ -180,11 +185,11 @@
 				waterHeight = max(waterHeight, 0);
 
 				//修改地形高度
-				float newTerrainHeight = height.x + suspendedSolid - newCapacity;
+				float newTerrainHeight = height.x + (suspendedSolid - newCapacity) * 0.2;
 				newTerrainHeight = max(0, newTerrainHeight);
 				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
 			
-				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, newSuspendedSolid);
+				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, height.w);
 			}
 			ENDCG
 		}

@@ -134,7 +134,7 @@ Material:
       data:
         first:
           name: _Height
-        second: 0.003
+        second: 0.02
     m_Colors:
       data:
         first:

@@ -41,7 +41,7 @@ Shader "Hidden/WaterPreview" {
 			{
 				fixed4 col = tex2Dproj (_MainTex, UNITY_PROJ_COORD(i.uvShadow));
 				fixed4 res = fixed4(0, 0.2, 1, min(0.7,col.g * _Scale));
-				UNITY_APPLY_FOG_COLOR(i.fogCoord, res, fixed4(1,1,1,1));
+				UNITY_APPLY_FOG_COLOR(i.fogCoord, res, unity_FogColor);
 				return res;
 			}
 			ENDCG

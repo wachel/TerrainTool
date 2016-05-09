@@ -163,20 +163,20 @@
 				float2 fluxOutflow = float2(outflow.y - outflow.x, outflow.w - outflow.z);
 				float2 fluxInflow = float2(inflow.x - inflow.y, inflow.z - inflow.w);
 				float2 flux = (fluxInflow + fluxOutflow) * 0.5 ;//通量
-				float2 velocity = flux / (height.y + 0.00001);
+				float2 velocity = flux / (height.y + 0.000000001);
 
 				float suspendedSolid = height.z + dot(inflow * capacityN / (waterN + (0.000000001).xxxx), (1).xxxx);
 				suspendedSolid -= dot(outflow,(1).xxxx) * height.z / (height.y + 0.000000001);
 				suspendedSolid = max(0.000000001, suspendedSolid);
 
-				////float4 srcHeight = tex2D(_MainTex, i.uv - flux * _MainTex_TexelSize.xy * 1000);
+				//float4 srcHeight = tex2D(_MainTex, i.uv - flux * _MainTex_TexelSize.xy * 1000);
 				//float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 1);
 				//float suspendedSolid = srcHeight.z;
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
-				float abrupt = (height.x - forwardHeight.x) * (1+height.w*5);
-				float newCapacity = (abrupt) * (length(flux) + 0.00) * 200;
-				newCapacity = max(0, newCapacity);
+				float abrupt = (height.x - forwardHeight.x);// *(1 + height.w * 5);
+				float newCapacity = (abrupt) * (length(flux) + 0.0000) * 200;
+				newCapacity = clamp(newCapacity,0,height.y * 0.5);
 
 				//水面更新
 				float4 diffFlow = inflow - outflow;
@@ -191,7 +191,9 @@
 				//修改地形高度
 				float newTerrainHeight = height.x + (suspendedSolid - newCapacity);
 				newTerrainHeight = max(0, newTerrainHeight);
-				float newSuspendedSolid = suspendedSolid + height.x - newTerrainHeight;
+				float suspendedSolidChange = height.x - newTerrainHeight;
+				float newSuspendedSolid = suspendedSolid + suspendedSolidChange;
+				waterHeight += suspendedSolidChange;
 			
 				return float4(newTerrainHeight, waterHeight, newSuspendedSolid, height.w);
 			}

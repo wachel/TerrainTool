@@ -4,29 +4,17 @@ using System;
 
 public enum ErosionEditType
 {
-    Local,
+    Brush,
     Global,
 }
-//
-//[Serializable]
-//public class ErosionRainConfig:UnityEngine.Object
-//{
-//    public float rainPointSpeed = 20;
-//    public float rainPointSize = 0.01f;
-//    public float rainPointHeight = 0.002f;
-//    public float evaporateSpeed = 0.00001f;
-//}
-
 
 [ExecuteInEditMode]
 public class TerrainErosion : MonoBehaviour
 {
 #if UNITY_EDITOR
-    [HideInInspector]
     public ErosionEditType editType;
+    public bool randomRaindrop;
 
-    //public ErosionRainConfig rainConfig;
-    
     public int simulateStep = 100;
 
     public float rainPointSpeed = 0;
@@ -36,10 +24,12 @@ public class TerrainErosion : MonoBehaviour
     public float evaporateSpeed = 0.0001f;
     public float globalRainSpeed = 0.00002f;
 
-    [HideInInspector]
+    public float brushSize = 20;
+
+
     public RenderTexture height_a;
-    [HideInInspector]
     public Terrain terrain;
+    public float viewWaterDensity = 0.5f;
 
     private RenderTexture outflow_a;
     private RenderTexture height_b;
@@ -111,7 +101,12 @@ public class TerrainErosion : MonoBehaviour
     public void EditorUpdate(Action completeCallback)
     {
         if (remainStep > 0) {
+            matErosion.SetFloat("_EvaporateSpeed", evaporateSpeed);
+            matErosion.SetFloat("_RainSpeed", randomRaindrop? 0: globalRainSpeed);
+            matRain.SetFloat("_Height", rainHeight);
+
             SimulateStep();
+
             remainStep -= 1;
             if(remainStep == 0) {
                 UpdateTerrain();
@@ -125,7 +120,7 @@ public class TerrainErosion : MonoBehaviour
     public void StartErosion()
     {
         terrain = GetComponent<Terrain>();
-        int size = terrain.terrainData.heightmapResolution - 1;
+        int size = terrain.terrainData.heightmapResolution;
         height_a = CreateRenderTexture(size, size);
         outflow_a = CreateRenderTexture(size, size);
         height_b = CreateRenderTexture(size, size);
@@ -151,26 +146,28 @@ public class TerrainErosion : MonoBehaviour
         Draw(startTexture, outflow_b, outflow_a, 0);
         Draw(startTexture, outflow_a, height_a, 1);
 
-        matErosion.SetFloat("_EvaporateSpeed", evaporateSpeed);
-        matErosion.SetFloat("_RainSpeed", globalRainSpeed);
-        matRain.SetFloat("_Height", rainHeight);
-
         remainStep = simulateStep;
+    }
+
+    public void StopErosion()
+    {
+        remainStep = 1;
     }
 
     void SimulateStep()
     {
-        //Debug.Log("step remain " + remainStep);
         Draw(height_a, outflow_a, outflow_b, 0);
         Draw(height_a, outflow_b, height_b, 1);
 
         Draw(height_b, outflow_b, outflow_a, 0);
         Draw(height_b, outflow_a, height_a, 1);
 
-        float probabilityOfRain = rainPointSpeed * 1;//画雨点的概率
-        while (UnityEngine.Random.Range(0.0f, 1f) < probabilityOfRain) {
-            DrawRain(rainTexture, height_a, new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f)), rainPointSize);
-            probabilityOfRain -= 1;
+        if (randomRaindrop) {
+            float probabilityOfRain = rainPointSpeed * 1;//画雨点的概率
+            while (UnityEngine.Random.Range(0.0f, 1f) < probabilityOfRain) {
+                DrawRain(rainTexture, height_a, new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f)), rainPointSize);
+                probabilityOfRain -= 1;
+            }
         }
     }
 
@@ -221,6 +218,13 @@ public class TerrainErosion : MonoBehaviour
         GL.PopMatrix();
     }
 
-
+    public float GetViewWaterHeight()
+    {
+        return Mathf.Pow(10,viewWaterDensity * 3);
+    }
+    public int GetRemainStep()
+    {
+        return remainStep;
+    }
 #endif
 }

@@ -98,7 +98,7 @@ public class TerrainErosion : MonoBehaviour
         rainTexture = CreateCircleTexture(64,new Color(0,1,0,0));
     }
 
-    public void OnEnable()
+    public void OnEnable() 
     {
         
     }

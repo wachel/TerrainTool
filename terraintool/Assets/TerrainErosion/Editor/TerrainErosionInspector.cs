@@ -39,6 +39,9 @@ public class TerrainErosionInspector : Editor
             terrainErosion.rainHeight = EditorGUILayout.Slider("Rain Height", terrainErosion.rainHeight, 0.001f, 0.1f);
             terrainErosion.evaporateSpeed = EditorGUILayout.Slider("Evaporate Speed", terrainErosion.evaporateSpeed, 0, 0.01f);
         }
+        else {
+            DrawDefaultInspector();
+        }
 
         if (GUILayout.Button("生成")) {
             terrainErosion.StartErosion();

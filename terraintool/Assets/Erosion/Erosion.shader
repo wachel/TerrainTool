@@ -174,7 +174,7 @@
 				//float suspendedSolid = srcHeight.z;
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
-				float abrupt = (height.x - forwardHeight.x) * (1 + height.w * 2.4);
+				float abrupt = (height.x - forwardHeight.x) * (1 + height.w * 5);
 				float newCapacity = (abrupt) * (length(flux) + 0.00001) * 20;
 				newCapacity = clamp(newCapacity,0,height.y * 0.5);
 

@@ -43,9 +43,11 @@ public class TerrainErosionInspector : Editor
 
         if (terrainErosion.editType == ErosionEditType.Brush) {
             selectedTool.SetValue(terrainEditor, -1, null);
+            brushPreviewProjector.enabled = true;
         }
 
         if (terrainErosion.editType == ErosionEditType.Global) {
+            brushPreviewProjector.enabled = false;
             terrainErosion.simulateStep = Mathf.Max(1, EditorGUILayout.IntField("Simulate Step", terrainErosion.simulateStep));
             //GUILayout.BeginArea()
         }
@@ -82,8 +84,9 @@ public class TerrainErosionInspector : Editor
     {
         terrainErosion = target as TerrainErosion;
 
-        globalProjector = CreatePreviewProjector();
-        brushPreviewProjector = CreatePreviewProjector();
+        globalProjector = CreatePreviewProjector("TerrainErosionPreview");
+        brushPreviewProjector = CreatePreviewProjector("BrushPreview");
+        brushPreviewProjector.material = new Material(Shader.Find("Hidden/ErosionBrushPreview"));
 
         UpdateTerrainInspectorTool();
         EditorApplication.update += Update;
@@ -96,12 +99,23 @@ public class TerrainErosionInspector : Editor
             GameObject.DestroyImmediate(globalProjector.gameObject);
             globalProjector = null;
         }
+        if (brushPreviewProjector != null) {
+            //GameObject.DestroyImmediate(brushPreviewProjector.gameObject);
+            //brushPreviewProjector = null;
+        }
     }
 
     public void OnSceneGUI()
     {
-        //Debug.Log(a.ToString());
-        //a++;
+        Vector2 uv;
+        Vector3 pos;
+        //if (Input.GetMouseButton(0)) {
+            if (Raycast(out uv, out pos)) {
+                Vector3 newPos = terrainErosion.terrain.transform.TransformPoint(pos);
+                Debug.Log(newPos.ToString());
+                brushPreviewProjector.transform.position = newPos;
+            }
+        //}
     }
 
     public void UpdateTerrainInspectorTool()
@@ -118,9 +132,9 @@ public class TerrainErosionInspector : Editor
     {
         terrainErosion.EditorUpdate(()=> {
             if (globalProjector != null) {
-                GameObject.DestroyImmediate(globalProjector.gameObject);
-                globalProjector = null;
+                globalProjector.enabled = false;
             }
+            Repaint();
         });
     }
 
@@ -141,6 +155,7 @@ public class TerrainErosionInspector : Editor
     private void StartErosion()
     {
         terrainErosion.StartErosion();
+
         globalProjector.enabled = true;
         globalProjector.material.mainTexture = terrainErosion.height_a;
         globalProjector.material.SetFloat("_Scale", terrainErosion.GetViewWaterHeight());
@@ -148,9 +163,9 @@ public class TerrainErosionInspector : Editor
         globalProjector.transform.position = terrainErosion.terrain.transform.position + terrainErosion.terrain.terrainData.size / 2 + Vector3.up * 500;
     }
 
-    private Projector CreatePreviewProjector()
+    private Projector CreatePreviewProjector(string name)
     {
-        GameObject gameObject = EditorUtility.CreateGameObjectWithHideFlags("TerrainErosionPreview", HideFlags.DontSave, new Type[]{typeof(Projector)});
+        GameObject gameObject = EditorUtility.CreateGameObjectWithHideFlags(name, HideFlags.DontSave, new Type[]{typeof(Projector)});
         Projector projector;
         projector = (gameObject.GetComponent(typeof(Projector)) as Projector);
         projector.enabled = false;

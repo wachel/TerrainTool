@@ -8,9 +8,13 @@ using System.Reflection;
 public class TerrainErosionInspector : Editor
 {
     Projector globalProjector;
+    Projector brushPreviewProjector;
     TerrainErosion terrainErosion;
     private static GUIStyle ToggleButtonStyleNormal = null;
     private static GUIStyle ToggleButtonStyleToggled = null;
+
+    object terrainEditor;
+    PropertyInfo selectedTool;
 
     bool painting = false;
 
@@ -24,39 +28,64 @@ public class TerrainErosionInspector : Editor
             ToggleButtonStyleToggled.normal.background = ToggleButtonStyleToggled.active.background;
         }
 
+        if((int)selectedTool.GetValue(terrainEditor,null) != -1) {
+            terrainErosion.editType = ErosionEditType.Global;
+        }
+
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Local Erosion", terrainErosion.editType == ErosionEditType.Local? ToggleButtonStyleToggled:ToggleButtonStyleNormal)) {
-            terrainErosion.editType = ErosionEditType.Local;
+        if (GUILayout.Button("Brush Erosion", terrainErosion.editType == ErosionEditType.Brush? ToggleButtonStyleToggled:ToggleButtonStyleNormal)) {
+            terrainErosion.editType = ErosionEditType.Brush;
         }
         if (GUILayout.Button("Global Erosion", terrainErosion.editType == ErosionEditType.Global? ToggleButtonStyleToggled:ToggleButtonStyleNormal)) {
             terrainErosion.editType = ErosionEditType.Global;
         }
         GUILayout.EndHorizontal();
 
-        if (terrainErosion.editType == ErosionEditType.Local) {
-            terrainErosion.rainPointSpeed = EditorGUILayout.Slider("Rain Density",terrainErosion.rainPointSpeed,0,10);//DrawProperty("Rain Density",terrainErosion.rainPointSpeed);
-            terrainErosion.rainPointSize = EditorGUILayout.Slider("Rain Size", terrainErosion.rainPointSize, 0.001f, 0.1f);
-            terrainErosion.rainHeight = EditorGUILayout.Slider("Rain Height", terrainErosion.rainHeight, 0.001f, 0.1f);
-            terrainErosion.evaporateSpeed = EditorGUILayout.Slider("Evaporate Speed", terrainErosion.evaporateSpeed, 0, 0.01f);
-        }
-        else {
-            DrawDefaultInspector();
+        if (terrainErosion.editType == ErosionEditType.Brush) {
+            selectedTool.SetValue(terrainEditor, -1, null);
         }
 
-        if (GUILayout.Button("生成")) {
-            terrainErosion.StartErosion();
-            globalProjector = CreatePreviewProjector();
-            globalProjector.enabled = true;
-            globalProjector.material.mainTexture = terrainErosion.height_a;
-            globalProjector.material.SetFloat("_Scale", 500);
-            globalProjector.orthographicSize = terrainErosion.terrain.terrainData.size.x / 2;
-            globalProjector.transform.position = terrainErosion.terrain.transform.position + terrainErosion.terrain.terrainData.size / 2 + Vector3.up * 500;
+        if (terrainErosion.editType == ErosionEditType.Global) {
+            terrainErosion.simulateStep = Mathf.Max(1, EditorGUILayout.IntField("Simulate Step", terrainErosion.simulateStep));
+            //GUILayout.BeginArea()
         }
+
+        if (terrainErosion.randomRaindrop = EditorGUILayout.Toggle("Random Raindrop", terrainErosion.randomRaindrop)) {
+            terrainErosion.rainPointSpeed = EditorGUILayout.Slider("Rain Speed", terrainErosion.rainPointSpeed, 0, 100);
+            terrainErosion.rainPointSize = EditorGUILayout.Slider("Raindrop Size", terrainErosion.rainPointSize, 0.001f, 0.1f);
+            terrainErosion.rainHeight = EditorGUILayout.Slider("Raindrop Height", terrainErosion.rainHeight, 0.001f, 0.1f);
+        }
+        else {
+            terrainErosion.globalRainSpeed = EditorGUILayout.Slider("Rain Speed", terrainErosion.globalRainSpeed, 0, 0.001f);
+        }
+        terrainErosion.evaporateSpeed = EditorGUILayout.Slider("Evaporate Speed", terrainErosion.evaporateSpeed, 0, 0.01f);
+        terrainErosion.viewWaterDensity = EditorGUILayout.Slider("View Water Density", terrainErosion.viewWaterDensity, 0, 1);
+        if (terrainErosion.editType == ErosionEditType.Global) {
+            if (terrainErosion.GetRemainStep() == 0) {
+                if (GUILayout.Button("Start")) {
+                    StartErosion();
+                }
+            }
+            else {
+                if (GUILayout.Button("Stop")) {
+                    terrainErosion.StopErosion();
+                }
+            }
+        }
+
+        if (globalProjector != null) {
+            globalProjector.material.SetFloat("_Scale", terrainErosion.GetViewWaterHeight());
+        }
+
     }
     public void OnEnable()
     {
         terrainErosion = target as TerrainErosion;
 
+        globalProjector = CreatePreviewProjector();
+        brushPreviewProjector = CreatePreviewProjector();
+
+        UpdateTerrainInspectorTool();
         EditorApplication.update += Update;
     }
 
@@ -75,42 +104,49 @@ public class TerrainErosionInspector : Editor
         //a++;
     }
 
-    public void UnselectTerrainInspectorTool()
+    public void UpdateTerrainInspectorTool()
     {
-        System.Type terrainType = null;
-        System.Type[] tmp = Assembly.GetAssembly(typeof(UnityEditor.Editor)).GetTypes();
-        for (int i = tmp.Length - 1; i >= 0; i--) {
-            if (tmp[i].Name == "TerrainInspector") { terrainType = tmp[i]; break; }
-        }
-        object[] editors = Resources.FindObjectsOfTypeAll(terrainType);
-        for (int i = 0; i < editors.Length; i++) {
-            PropertyInfo toolProp = terrainType.GetProperty("selectedTool", BindingFlags.Instance | BindingFlags.NonPublic);
-            toolProp.SetValue(editors[i], -1, null);
+        Type TerrainInspectorType = FindTypeFromReflection(typeof(UnityEditor.Editor), "TerrainInspector");
+        selectedTool = TerrainInspectorType.GetProperty("selectedTool", BindingFlags.Instance | BindingFlags.NonPublic);
+        object[] objs = Resources.FindObjectsOfTypeAll(TerrainInspectorType);
+        if(objs.Length > 0) {
+            terrainEditor = objs[0];
         }
     }
 
     public void Update()
     {
         terrainErosion.EditorUpdate(()=> {
-            GameObject.DestroyImmediate(globalProjector.gameObject);
-            globalProjector = null;
+            if (globalProjector != null) {
+                GameObject.DestroyImmediate(globalProjector.gameObject);
+                globalProjector = null;
+            }
         });
     }
 
-    public void Dispose()
+    private bool Raycast(out Vector2 uv, out Vector3 pos)
     {
-        int a = 0;
+        Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+        RaycastHit raycastHit;
+        if (terrainErosion.terrain.GetComponent<Collider>().Raycast(ray, out raycastHit, float.PositiveInfinity)) {
+            uv = raycastHit.textureCoord;
+            pos = raycastHit.point;
+            return true;
+        }
+        uv = Vector2.zero;
+        pos = Vector3.zero;
+        return false;
     }
 
-    private float DrawProperty(string label,float val)
+    private void StartErosion()
     {
-        return EditorGUILayout.FloatField(label,val);
+        terrainErosion.StartErosion();
+        globalProjector.enabled = true;
+        globalProjector.material.mainTexture = terrainErosion.height_a;
+        globalProjector.material.SetFloat("_Scale", terrainErosion.GetViewWaterHeight());
+        globalProjector.orthographicSize = terrainErosion.terrain.terrainData.size.x / 2;
+        globalProjector.transform.position = terrainErosion.terrain.transform.position + terrainErosion.terrain.terrainData.size / 2 + Vector3.up * 500;
     }
-    private int DrawProperty(string label, int val)
-    {
-        return EditorGUILayout.IntField(label, val);
-    }
-
 
     private Projector CreatePreviewProjector()
     {
@@ -126,5 +162,16 @@ public class TerrainErosionInspector : Editor
         projector.material = new Material(Shader.Find("Hidden/WaterPreview"));
         projector.enabled = false;
         return projector;
+    }
+
+    Type FindTypeFromReflection(Type libType, string typeName)
+    {
+        Type[] types = Assembly.GetAssembly(libType).GetTypes();
+        for (int i = 0; i < types.Length; i++) {
+            if (types[i].Name == typeName) {
+                return types[i];
+            }
+        }
+        return null;
     }
 }

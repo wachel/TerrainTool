@@ -199,7 +199,7 @@ public class TerrainErosion : MonoBehaviour
         
         float[,] pixels = terrain.terrainData.GetHeights(0, 0, size, size);
         Color[] colors = new Color[size * size];
-       // float[,] hardness = GetHardness(size, size);
+        //float[,] hardness = GetHardness(size, size);
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 colors[j * size + i] = new Color(pixels[j, i], 0, 0, 0);// hardness[i, j] * 0.1f);
@@ -315,7 +315,7 @@ public class TerrainErosion : MonoBehaviour
     }
     public int GetRealBrushSize()
     {
-        return (int)Mathf.Pow(2, brushSizeFactor * 10);
+        return (int)(brushSizeFactor * brushSizeFactor * terrain.terrainData.heightmapResolution);
     }
     public int GetRemainStep()
     {

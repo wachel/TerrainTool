@@ -86,7 +86,7 @@
 				//流速
 				outflow *= flowdamp;
 				outflow += diffHeight * flowSpeed / distance;
-				outflow = max(outflow, (0.0000001).xxxx);
+				outflow = max(outflow, (0.00000000000001).xxxx);
 
 				//防止负数
 				float outflowScale = waterHeight / (outflow.x + outflow.y + outflow.z + outflow.w);

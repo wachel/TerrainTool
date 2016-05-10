@@ -12,32 +12,52 @@ public enum ErosionEditType
 public class TerrainErosion : MonoBehaviour
 {
 #if UNITY_EDITOR
-    public ErosionEditType editType;
-    public bool randomRaindrop;
+    public ErosionEditType editType;//brush or global
+    public bool randomRaindrop;     //use raindrop
 
-    public int simulateStep = 100;
+    public int simulateStep = 100;//for global
 
-    public float rainPointSpeed = 0;
-    public float rainPointSize = 0.01f;
-    public float rainHeight = 0.02f;
+    //public float rainPointSpeed = 0.1f;
+    public float rainPointSize = 1f;
+    public float raindropDensity = 0.00001f;
+    //public float rainHeight = 0.02f;
 
     public float evaporateSpeed = 0.0001f;
-    public float globalRainSpeed = 0.00002f;
+    public float rainSpeed = 0.00002f;
 
-    public float brushSize = 20;
+    public float brushSizeFactor = 0.5f;//control brush size
+    public bool isPainting = false;
 
 
-    public RenderTexture height_a;
     public Terrain terrain;
     public float viewWaterDensity = 0.5f;
+    public Texture2D brushPreviewTexture;
+    public Vector2 brushPreviewUV;
 
+    public RenderTexture height_a;
     private RenderTexture outflow_a;
     private RenderTexture height_b;
     private RenderTexture outflow_b;
+    private Texture2D startTexture;
     private Material matErosion;
     private Material matRain;
-    private Texture2D rainTexture;
-    private int remainStep = 0;
+    private Texture2D raindropTexture;
+    private Texture2D globalRainTexture;
+    private int globalRemainStep = 0;
+    private int paintDelayStep = 0;
+
+    public void Awake()
+    {
+        matErosion = new Material(Shader.Find("Hidden/Erosion"));
+        matRain = new Material(Shader.Find("Hidden/Rain"));
+        raindropTexture = CreateCircleTexture(64, new Color(0, 1, 0, 0), new Color(0, 0, 0, 0),true);
+        brushPreviewTexture = CreateCircleTexture(64, new Color(0, 0.2f, 1, 0.8f), new Color(0, 0.2f, 1, 0),false);
+        globalRainTexture = CreateColorTexture(2, new Color(0, 1, 0, 0));
+
+        terrain = GetComponent<Terrain>();
+        int size = terrain.terrainData.heightmapResolution;
+        startTexture = new Texture2D(size, size, TextureFormat.RGBAFloat, false);
+    }
 
     private RenderTexture CreateRenderTexture(int width, int height)
     {
@@ -49,22 +69,43 @@ public class TerrainErosion : MonoBehaviour
         return rt;
     }
 
-    private Texture2D CreateCircleTexture(int size,Color centerColor)
+    private Texture2D CreateColorTexture(int size,Color color)
     {
         Color[] colors = new Color[size * size];
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                float dist = Mathf.Sqrt(i*i + j*j);
-                colors[j*size + i] = Color.Lerp(centerColor,new Color(0,0,0,0),dist/size);
+                colors[j * size + i] = color;
             }
         }
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBAFloat, true);
         tex.SetPixels(colors);
         tex.Apply(true);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
         return tex;
     }
 
-    private float[,] GetHardness(int width,int height)
+    private Texture2D CreateCircleTexture(int size, Color centerColor, Color sideColor,bool bMipmap)
+    {
+        Color[] colors = new Color[size * size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                float radius = size * 0.5f;
+                float dx = (i - radius) / radius;
+                float dy = (j - radius) / radius;
+                float dist = (dx*dx + dy*dy) * 1.1f;
+                colors[j * size + i] = Color.Lerp(centerColor, sideColor, dist);
+            }
+        }
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBAFloat, bMipmap);
+        tex.SetPixels(colors);
+        tex.Apply(bMipmap);
+        tex.filterMode = FilterMode.Bilinear;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        return tex;
+    }
+
+    private float[,] GetHardness(int width, int height)
     {
         LibNoise.Unity.Generator.Perlin generator = new LibNoise.Unity.Generator.Perlin();
         generator.Frequency = 1.0 / 6;
@@ -72,7 +113,7 @@ public class TerrainErosion : MonoBehaviour
         generator.Seed = 123498765;
         generator.Quality = LibNoise.Unity.QualityMode.Low;
 
-        float[,] values = new float[width ,height];
+        float[,] values = new float[width, height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 values[i, j] = (float)generator.GetValue(i, j, 0) * 0.4f + 0.5f;
@@ -83,14 +124,12 @@ public class TerrainErosion : MonoBehaviour
 
     void Start()
     {
-        matErosion = new Material(Shader.Find("Hidden/Erosion"));
-        matRain = new Material(Shader.Find("Hidden/Rain"));
-        rainTexture = CreateCircleTexture(64,new Color(0,1,0,0));
+
     }
 
-    public void OnEnable() 
+    public void OnEnable()
     {
-        
+
     }
 
     public void OnDisable()
@@ -100,44 +139,70 @@ public class TerrainErosion : MonoBehaviour
 
     public void EditorUpdate(Action completeCallback)
     {
-        if (remainStep > 0) {
+        if (isPainting) {
+            paintDelayStep = 20;
             matErosion.SetFloat("_EvaporateSpeed", evaporateSpeed);
-            matErosion.SetFloat("_RainSpeed", randomRaindrop? 0: globalRainSpeed);
-            matRain.SetFloat("_Height", rainHeight);
+            ApplyBrush();
+        }
 
+        if (paintDelayStep > 0) {
+            SimulateStep();
+            paintDelayStep--;
+            if (paintDelayStep == 0) {
+                UpdateTerrain();
+                if (completeCallback != null) {
+                    completeCallback();
+                }
+            }
+        }
+
+        if (globalRemainStep > 0) {
+            matErosion.SetFloat("_EvaporateSpeed", evaporateSpeed);
+            matErosion.SetFloat("_RainSpeed", 0);
+
+            ApplyGlobal();
             SimulateStep();
 
-            remainStep -= 1;
-            if(remainStep == 0) {
+            globalRemainStep -= 1;
+            if (globalRemainStep == 0) {
                 UpdateTerrain();
-                if(completeCallback != null) {
+                if (completeCallback != null) {
                     completeCallback();
                 }
             }
         }
     }
 
+    public void StartGlobalRain()
+    {
+        globalRemainStep = simulateStep;
+    }
+
     public void StartErosion()
     {
-        terrain = GetComponent<Terrain>();
         int size = terrain.terrainData.heightmapResolution;
-        height_a = CreateRenderTexture(size, size);
-        outflow_a = CreateRenderTexture(size, size);
-        height_b = CreateRenderTexture(size, size);
-        outflow_b = CreateRenderTexture(size, size);
+        if (height_a == null || height_a.width != size) {
+            height_a = CreateRenderTexture(size, size);
+            outflow_a = CreateRenderTexture(size, size);
+            height_b = CreateRenderTexture(size, size);
+            outflow_b = CreateRenderTexture(size, size);
+        }
 
         Clear(height_a);
         Clear(outflow_a);
         Clear(height_b);
         Clear(outflow_b);
 
-        Texture2D startTexture = new Texture2D(size, size, TextureFormat.RGBAFloat, false);
+        if(startTexture == null || startTexture.width != size) {
+            startTexture = new Texture2D(size, size, TextureFormat.RGBAFloat, false);
+        }
+        
         float[,] pixels = terrain.terrainData.GetHeights(0, 0, size, size);
         Color[] colors = new Color[size * size];
-        float[,] hardness = GetHardness(size,size);
+       // float[,] hardness = GetHardness(size, size);
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                colors[j * size + i] = new Color(pixels[j, i], 0, 0, hardness[i, j] * 0.1f);
+                colors[j * size + i] = new Color(pixels[j, i], 0, 0, 0);// hardness[i, j] * 0.1f);
             }
         }
         startTexture.SetPixels(colors);
@@ -145,13 +210,11 @@ public class TerrainErosion : MonoBehaviour
 
         Draw(startTexture, outflow_b, outflow_a, 0);
         Draw(startTexture, outflow_a, height_a, 1);
-
-        remainStep = simulateStep;
     }
 
     public void StopErosion()
     {
-        remainStep = 1;
+        globalRemainStep = 1;
     }
 
     void SimulateStep()
@@ -161,14 +224,6 @@ public class TerrainErosion : MonoBehaviour
 
         Draw(height_b, outflow_b, outflow_a, 0);
         Draw(height_b, outflow_a, height_a, 1);
-
-        if (randomRaindrop) {
-            float probabilityOfRain = rainPointSpeed * 1;//画雨点的概率
-            while (UnityEngine.Random.Range(0.0f, 1f) < probabilityOfRain) {
-                DrawRain(rainTexture, height_a, new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f)), rainPointSize);
-                probabilityOfRain -= 1;
-            }
-        }
     }
 
     void UpdateTerrain()
@@ -206,6 +261,7 @@ public class TerrainErosion : MonoBehaviour
 
     void DrawRain(Texture2D rainTexture, RenderTexture target, Vector2 pos, float size)
     {
+        pos -= Vector2.one * size * 0.5f;
         GL.PushMatrix();
         float w = 1 / size;
         float h = 1 / size;
@@ -218,13 +274,60 @@ public class TerrainErosion : MonoBehaviour
         GL.PopMatrix();
     }
 
+    void ApplyBrush()
+    {
+        if (randomRaindrop) {
+            matRain.SetFloat("_Height", GetRainHeight());
+            float probabilityOfRain = raindropDensity * GetRealBrushSize() * GetRealBrushSize() * Mathf.PI;//画雨点的概率
+            while (UnityEngine.Random.Range(0.0f, 1f) < probabilityOfRain) {
+                float randomAngle = UnityEngine.Random.Range(0, Mathf.PI * 2);
+                Vector2 randomDir = new Vector2(Mathf.Cos(randomAngle), Mathf.Sin(randomAngle));
+                float randomLenght = UnityEngine.Random.Range(0f, 1f);
+                DrawRain(raindropTexture, height_a, brushPreviewUV + randomDir * randomLenght * GetRealBrushSize()/terrain.terrainData.heightmapResolution , rainPointSize/terrain.terrainData.heightmapResolution);
+                probabilityOfRain -= 1;
+            }
+        }
+        else {
+            matRain.SetFloat("_Height", rainSpeed);
+            DrawRain(raindropTexture, height_a, brushPreviewUV, GetRealBrushSize()*2/(float)terrain.terrainData.heightmapResolution);
+        }
+    }
+
+    void ApplyGlobal()
+    {
+        if (randomRaindrop) {
+            matRain.SetFloat("_Height", GetRainHeight());
+            float probabilityOfRain = raindropDensity * terrain.terrainData.heightmapResolution * terrain.terrainData.heightmapResolution * Mathf.PI;//画雨点的概率
+            while (UnityEngine.Random.Range(0.0f, 1f) < probabilityOfRain) {
+                DrawRain(raindropTexture, height_a, new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f)), rainPointSize / terrain.terrainData.heightmapResolution);
+                probabilityOfRain -= 1;
+            }
+        }
+        else {
+            matRain.SetFloat("_Height", rainSpeed);
+            DrawRain(globalRainTexture, height_a, new Vector2(0.5f,0.5f), 1);
+        }
+    }
+
     public float GetViewWaterHeight()
     {
-        return Mathf.Pow(10,viewWaterDensity * 3);
+        return Mathf.Pow(10, viewWaterDensity * 3);
+    }
+    public int GetRealBrushSize()
+    {
+        return (int)Mathf.Pow(2, brushSizeFactor * 10);
     }
     public int GetRemainStep()
     {
-        return remainStep;
+        return globalRemainStep;
+    }
+    public int GetPaintDelayStep()
+    {
+        return paintDelayStep;
+    }
+    private float GetRainHeight()
+    {
+        return rainSpeed / (raindropDensity * rainPointSize * rainPointSize * Mathf.PI / 3);
     }
 #endif
 }

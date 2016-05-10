@@ -44,6 +44,12 @@ public class TerrainErosionInspector : Editor
         if (terrainErosion.editType == ErosionEditType.Brush) {
             selectedTool.SetValue(terrainEditor, -1, null);
             brushPreviewProjector.enabled = true;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Brush Size");
+            terrainErosion.brushSizeFactor = GUILayout.HorizontalSlider(terrainErosion.brushSizeFactor, 0, 1,GUILayout.ExpandWidth(true));
+            GUILayout.Label(terrainErosion.GetRealBrushSize().ToString(),GUILayout.Width(50));
+            GUILayout.EndHorizontal();
+            //terrainErosion.brushSizeFactor = EditorGUILayout.Slider("Brush Size", terrainErosion.brushSizeFactor,0,1);
         }
 
         if (terrainErosion.editType == ErosionEditType.Global) {
@@ -53,19 +59,22 @@ public class TerrainErosionInspector : Editor
         }
 
         if (terrainErosion.randomRaindrop = EditorGUILayout.Toggle("Random Raindrop", terrainErosion.randomRaindrop)) {
-            terrainErosion.rainPointSpeed = EditorGUILayout.Slider("Rain Speed", terrainErosion.rainPointSpeed, 0, 100);
-            terrainErosion.rainPointSize = EditorGUILayout.Slider("Raindrop Size", terrainErosion.rainPointSize, 0.001f, 0.1f);
-            terrainErosion.rainHeight = EditorGUILayout.Slider("Raindrop Height", terrainErosion.rainHeight, 0.001f, 0.1f);
+            terrainErosion.raindropDensity = EditorGUILayout.Slider("Raindrop Density", terrainErosion.raindropDensity, 0, 100);
+            terrainErosion.rainPointSize = EditorGUILayout.Slider("Raindrop Size", terrainErosion.rainPointSize, 0.01f, 5f);
+            //terrainErosion.rainHeight = EditorGUILayout.Slider("Raindrop Height", terrainErosion.rainHeight, 0.001f, 0.1f);
         }
         else {
-            terrainErosion.globalRainSpeed = EditorGUILayout.Slider("Rain Speed", terrainErosion.globalRainSpeed, 0, 0.001f);
         }
+
+
+        terrainErosion.rainSpeed = EditorGUILayout.Slider("Rain Speed", terrainErosion.rainSpeed, 0, 0.001f);
         terrainErosion.evaporateSpeed = EditorGUILayout.Slider("Evaporate Speed", terrainErosion.evaporateSpeed, 0, 0.01f);
         terrainErosion.viewWaterDensity = EditorGUILayout.Slider("View Water Density", terrainErosion.viewWaterDensity, 0, 1);
         if (terrainErosion.editType == ErosionEditType.Global) {
             if (terrainErosion.GetRemainStep() == 0) {
                 if (GUILayout.Button("Start")) {
                     StartErosion();
+                    terrainErosion.StartGlobalRain();
                 }
             }
             else {
@@ -78,7 +87,9 @@ public class TerrainErosionInspector : Editor
         if (globalProjector != null) {
             globalProjector.material.SetFloat("_Scale", terrainErosion.GetViewWaterHeight());
         }
-
+        if(brushPreviewProjector != null) {
+            brushPreviewProjector.orthographicSize = terrainErosion.GetRealBrushSize();
+        }
     }
     public void OnEnable()
     {
@@ -87,6 +98,7 @@ public class TerrainErosionInspector : Editor
         globalProjector = CreatePreviewProjector("TerrainErosionPreview");
         brushPreviewProjector = CreatePreviewProjector("BrushPreview");
         brushPreviewProjector.material = new Material(Shader.Find("Hidden/ErosionBrushPreview"));
+        brushPreviewProjector.material.mainTexture = terrainErosion.brushPreviewTexture;
 
         UpdateTerrainInspectorTool();
         EditorApplication.update += Update;
@@ -100,8 +112,8 @@ public class TerrainErosionInspector : Editor
             globalProjector = null;
         }
         if (brushPreviewProjector != null) {
-            //GameObject.DestroyImmediate(brushPreviewProjector.gameObject);
-            //brushPreviewProjector = null;
+            GameObject.DestroyImmediate(brushPreviewProjector.gameObject);
+            brushPreviewProjector = null;
         }
     }
 
@@ -109,13 +121,26 @@ public class TerrainErosionInspector : Editor
     {
         Vector2 uv;
         Vector3 pos;
-        //if (Input.GetMouseButton(0)) {
+        if (terrainErosion.editType == ErosionEditType.Brush) {
+            HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive));
             if (Raycast(out uv, out pos)) {
                 Vector3 newPos = terrainErosion.terrain.transform.TransformPoint(pos);
-                Debug.Log(newPos.ToString());
-                brushPreviewProjector.transform.position = newPos;
+                //Debug.Log(newPos.ToString());
+                brushPreviewProjector.transform.position = newPos + Vector3.up * 500;
+                terrainErosion.brushPreviewUV = uv;
+                if (Event.current.type == EventType.MouseDrag && Event.current.button == 0 && !Event.current.control && !Event.current.shift && !Event.current.alt) {
+                    terrainErosion.isPainting = true;
+                    if (terrainErosion.GetPaintDelayStep() == 0) {
+                        StartErosion();
+                    }
+                }
+                SceneView.RepaintAll();
             }
-        //}
+        }
+
+        if (Event.current.type == EventType.MouseUp) {
+            terrainErosion.isPainting = false;
+        }
     }
 
     public void UpdateTerrainInspectorTool()

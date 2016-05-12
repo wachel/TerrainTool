@@ -175,7 +175,7 @@
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
 				float abrupt = (height.x - forwardHeight.x) * (1 + height.w * 5);
-				float newCapacity = (abrupt) * (length(flux) + 0.004) * 20;
+				float newCapacity = (abrupt) * (length(flux) + height.x * 0.003) * 20;
 				newCapacity = clamp(newCapacity,0,height.y * 0.5);
 
 				//水面更新

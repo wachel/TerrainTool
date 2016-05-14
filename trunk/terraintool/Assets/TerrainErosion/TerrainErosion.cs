@@ -34,7 +34,8 @@ public class TerrainErosion : MonoBehaviour
     public Texture2D brushPreviewTexture;
     public Vector2 brushPreviewUV;
 
-    public RenderTexture height_a;
+    private RenderTexture height_a;
+    public RenderTexture HeightA { get { return height_a; } }
     private RenderTexture outflow_a;
     private RenderTexture height_b;
     private RenderTexture outflow_b;

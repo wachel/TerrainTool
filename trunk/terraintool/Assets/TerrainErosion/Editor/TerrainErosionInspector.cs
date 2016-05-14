@@ -59,7 +59,7 @@ public class TerrainErosionInspector : Editor
         }
 
         if (terrainErosion.randomRaindrop = EditorGUILayout.Toggle("Random Raindrop", terrainErosion.randomRaindrop)) {
-            terrainErosion.raindropDensity = EditorGUILayout.Slider("Raindrop Density", terrainErosion.raindropDensity, 0, 100);
+            terrainErosion.raindropDensity = EditorGUILayout.Slider("Raindrop Density", terrainErosion.raindropDensity, 0, 0.1f);
             terrainErosion.rainPointSize = EditorGUILayout.Slider("Raindrop Size", terrainErosion.rainPointSize, 0.01f, 5f);
             //terrainErosion.rainHeight = EditorGUILayout.Slider("Raindrop Height", terrainErosion.rainHeight, 0.001f, 0.1f);
         }
@@ -182,7 +182,7 @@ public class TerrainErosionInspector : Editor
         terrainErosion.StartErosion();
 
         globalProjector.enabled = true;
-        globalProjector.material.mainTexture = terrainErosion.height_a;
+        globalProjector.material.mainTexture = terrainErosion.HeightA;
         globalProjector.material.SetFloat("_Scale", terrainErosion.GetViewWaterHeight());
         globalProjector.orthographicSize = terrainErosion.terrain.terrainData.size.x / 2;
         globalProjector.transform.position = terrainErosion.terrain.transform.position + terrainErosion.terrain.terrainData.size / 2 + Vector3.up * 500;

@@ -171,11 +171,11 @@
 
 				//float4 srcHeight = tex2D(_MainTex, i.uv - flux * _MainTex_TexelSize.xy * 1000);
 				//float4 srcHeight = tex2D(_MainTex, i.uv - velocity * _MainTex_TexelSize.xy * 1);
-				//float suspendedSolid = srcHeight.z;
+				//float suspendedSolid = height.z;
 
-				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 1 * _MainTex_TexelSize.xy);
+				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 0.5 * _MainTex_TexelSize.xy);
 				float abrupt = (height.x - forwardHeight.x) * (1 + height.w * 5);
-				float newCapacity = (abrupt) * (length(flux) + height.x * 0.003) * 20;
+				float newCapacity = (abrupt) * pow(length(flux),1.5) * 500;
 				newCapacity = clamp(newCapacity,0,height.y * 0.5);
 
 				//水面更新

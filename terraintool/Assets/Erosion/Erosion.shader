@@ -175,7 +175,7 @@
 
 				float4 forwardHeight = tex2D(_MainTex, i.uv + normalize(flux) * 0.5 * _MainTex_TexelSize.xy);
 				float abrupt = (height.x - forwardHeight.x) * (1 + height.w * 5);
-				float newCapacity = (abrupt) * pow(length(flux),1.5) * 500;
+				float newCapacity = (abrupt + 0.0005) * pow(length(flux),1.0) * 200;
 				newCapacity = clamp(newCapacity,0,height.y * 0.5);
 
 				//水面更新
@@ -190,6 +190,7 @@
 
 				//修改地形高度
 				float newTerrainHeight = height.x + (suspendedSolid - newCapacity);
+				//newTerrainHeight = lerp(newTerrainHeight,dot(terrainN,(1).xxxx) * 0.25,0.01);
 				newTerrainHeight = max(0, newTerrainHeight);
 				float suspendedSolidChange = height.x - newTerrainHeight;
 				float newSuspendedSolid = suspendedSolid + suspendedSolidChange;

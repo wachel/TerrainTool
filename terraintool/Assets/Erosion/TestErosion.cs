@@ -26,7 +26,7 @@ public class TestErosion : MonoBehaviour
     RenderTexture createTexture(int width,int height)
     {
         RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBFloat);
-        rt.generateMips = false;
+        rt.autoGenerateMips = false;
         rt.useMipMap = false;
         rt.filterMode = FilterMode.Point;
         rt.wrapMode = TextureWrapMode.Clamp;

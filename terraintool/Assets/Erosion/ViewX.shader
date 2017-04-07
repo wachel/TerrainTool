@@ -1,4 +1,6 @@
-﻿Shader "Hidden/ViewX"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Hidden/ViewX"
 {
 	Properties
 	{
@@ -33,7 +35,7 @@
 			v2f vert (appdata v)
 			{
 				v2f o;
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.uv = v.uv;
 				return o;
 			}
@@ -44,7 +46,7 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				return float4(col.z,col.a,0, 0) * _Scale;
+				return float4(0,col.a,0, 0) * _Scale;
 			}
 			ENDCG
 		}

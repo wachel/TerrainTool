@@ -20,7 +20,7 @@ public class TerrainErosionInspector : Editor
 
     public override void OnInspectorGUI()
     {
-        //DrawDefaultInspector();
+        DrawDefaultInspector();
 
         if (ToggleButtonStyleNormal == null) {
             ToggleButtonStyleNormal = new GUIStyle("Button");
@@ -156,6 +156,9 @@ public class TerrainErosionInspector : Editor
     public void Update()
     {
         terrainErosion.EditorUpdate(()=> {
+            Undo.RegisterCompleteObjectUndo(terrainErosion.terrain.terrainData, "Terrain Brush");
+            terrainErosion.UpdateTerrain();
+            EditorUtility.SetDirty(terrainErosion.terrain.terrainData);
             if (globalProjector != null) {
                 globalProjector.enabled = false;
             }

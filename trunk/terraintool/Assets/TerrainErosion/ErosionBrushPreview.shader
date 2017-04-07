@@ -1,3 +1,7 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_Projector' with 'unity_Projector'
+
 Shader "Hidden/ErosionBrushPreview" {
 	Properties {
 		_MainTex ("MainTex", 2D) = "gray" {}
@@ -22,13 +26,13 @@ Shader "Hidden/ErosionBrushPreview" {
 				float4 pos : SV_POSITION;
 			};
 			
-			float4x4 _Projector;
+			float4x4 unity_Projector;
 			
 			v2f vert (float4 vertex : POSITION)
 			{
 				v2f o;
-				o.pos = mul (UNITY_MATRIX_MVP, vertex);
-				o.uvShadow = mul (_Projector, vertex);
+				o.pos = UnityObjectToClipPos (vertex);
+				o.uvShadow = mul (unity_Projector, vertex);
 				UNITY_TRANSFER_FOG(o,o.pos);
 				return o;
 			}

@@ -1,4 +1,6 @@
-﻿Shader "Unlit/ViewHeight3D"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Unlit/ViewHeight3D"
 {
 	Properties
 	{
@@ -68,7 +70,7 @@
 				normal = normalize(normal);
 
 				v2f o;
-				o.vertex = mul(UNITY_MATRIX_MVP, float4(pos,1));
+				o.vertex = UnityObjectToClipPos(float4(pos,1));
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 
 				fixed3 worldNormal = UnityObjectToWorldNormal(normal);

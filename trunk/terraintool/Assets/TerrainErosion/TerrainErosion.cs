@@ -12,6 +12,7 @@ public enum ErosionEditType
 public class TerrainErosion : MonoBehaviour
 {
 #if UNITY_EDITOR
+    public Renderer previewObject;
     public ErosionEditType editType;//brush or global
     public bool randomRaindrop;     //use raindrop
 
@@ -63,7 +64,7 @@ public class TerrainErosion : MonoBehaviour
     private RenderTexture CreateRenderTexture(int width, int height)
     {
         RenderTexture rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBFloat);
-        rt.generateMips = false;
+        rt.autoGenerateMips = false;
         rt.useMipMap = false;
         rt.filterMode = FilterMode.Bilinear;
         rt.wrapMode = TextureWrapMode.Clamp;
@@ -150,7 +151,6 @@ public class TerrainErosion : MonoBehaviour
             SimulateStep();
             paintDelayStep--;
             if (paintDelayStep == 0) {
-                UpdateTerrain();
                 if (completeCallback != null) {
                     completeCallback();
                 }
@@ -166,7 +166,6 @@ public class TerrainErosion : MonoBehaviour
 
             globalRemainStep -= 1;
             if (globalRemainStep == 0) {
-                UpdateTerrain();
                 if (completeCallback != null) {
                     completeCallback();
                 }
@@ -225,9 +224,13 @@ public class TerrainErosion : MonoBehaviour
 
         Draw(height_b, outflow_b, outflow_a, 0);
         Draw(height_b, outflow_a, height_a, 1);
+
+        if (previewObject) {
+            previewObject.sharedMaterial.mainTexture = height_b;
+        }
     }
 
-    void UpdateTerrain()
+    public void UpdateTerrain()
     {
         RenderTexture.active = height_b;
         Texture2D temp = new Texture2D(height_b.width, height_b.height, TextureFormat.RGBAFloat, false);

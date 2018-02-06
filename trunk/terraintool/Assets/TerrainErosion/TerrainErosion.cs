@@ -50,15 +50,7 @@ public class TerrainErosion : MonoBehaviour
 
     public void Awake()
     {
-        matErosion = new Material(Shader.Find("Hidden/Erosion"));
-        matRain = new Material(Shader.Find("Hidden/Rain"));
-        raindropTexture = CreateCircleTexture(64, new Color(0, 1, 0, 0), new Color(0, 0, 0, 0),true);
-        brushPreviewTexture = CreateCircleTexture(64, new Color(0, 0.2f, 1, 0.8f), new Color(0, 0.2f, 1, 0),false);
-        globalRainTexture = CreateColorTexture(2, new Color(0, 1, 0, 0));
 
-        terrain = GetComponent<Terrain>();
-        int size = terrain.terrainData.heightmapResolution;
-        startTexture = new Texture2D(size, size, TextureFormat.RGBAFloat, false);
     }
 
     private RenderTexture CreateRenderTexture(int width, int height)
@@ -131,7 +123,15 @@ public class TerrainErosion : MonoBehaviour
 
     public void OnEnable()
     {
+        matErosion = new Material(Shader.Find("Hidden/Erosion"));
+        matRain = new Material(Shader.Find("Hidden/Rain"));
+        raindropTexture = CreateCircleTexture(64, new Color(0, 1, 0, 0), new Color(0, 0, 0, 0), true);
+        brushPreviewTexture = CreateCircleTexture(64, new Color(0, 0.2f, 1, 0.8f), new Color(0, 0.2f, 1, 0), false);
+        globalRainTexture = CreateColorTexture(2, new Color(0, 1, 0, 0));
 
+        terrain = GetComponent<Terrain>();
+        int size = terrain.terrainData.heightmapResolution;
+        startTexture = new Texture2D(size, size, TextureFormat.RGBAFloat, false);
     }
 
     public void OnDisable()
@@ -184,6 +184,9 @@ public class TerrainErosion : MonoBehaviour
         if (height_a == null || height_a.width != size) {
             height_a = CreateRenderTexture(size, size);
             outflow_a = CreateRenderTexture(size, size);
+        }
+
+        if(height_b == null || height_b.width != size) {
             height_b = CreateRenderTexture(size, size);
             outflow_b = CreateRenderTexture(size, size);
         }

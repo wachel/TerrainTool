@@ -62,10 +62,10 @@ Shader "Hidden/Erosion"
 				float waterHeight = height.y;
 
 				//neighbour
-				float4 heightL = tex2D(_MainTex,i.uv + (float2(-1.0,0.0) + hash(i.uv + _Time.y)) * _MainTex_TexelSize.xy);
-				float4 heightR = tex2D(_MainTex,i.uv + (float2( 1.0,0.0) + hash(i.uv + _Time.y)) * _MainTex_TexelSize.xy);
-				float4 heightB = tex2D(_MainTex,i.uv + (float2(0.0,-1.0) + hash(i.uv + _Time.y)) * _MainTex_TexelSize.xy);
-				float4 heightT = tex2D(_MainTex,i.uv + (float2(0.0, 1.0) + hash(i.uv + _Time.y)) * _MainTex_TexelSize.xy);
+				float4 heightL = tex2D(_MainTex,i.uv + (float2(-1.0,0.0)) * _MainTex_TexelSize.xy);
+				float4 heightR = tex2D(_MainTex,i.uv + (float2( 1.0,0.0)) * _MainTex_TexelSize.xy);
+				float4 heightB = tex2D(_MainTex,i.uv + (float2(0.0,-1.0)) * _MainTex_TexelSize.xy);
+				float4 heightT = tex2D(_MainTex,i.uv + (float2(0.0, 1.0)) * _MainTex_TexelSize.xy);
 				float4 totalHeightN = float4(
 					heightL.x + heightL.y, 
 					heightR.x + heightR.y, 
